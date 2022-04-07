@@ -12,13 +12,14 @@ model = OpenAIGPTDoubleHeadsModel.from_pretrained('openai-gpt')
 tokenizer = OpenAIGPTTokenizer.from_pretrained('openai-gpt')
 
 
-def build_trainging_data_batch(batch_size, history, reply):
+def build_trainging_data_batch(history, reply):
     words, words_distractor, segments, segments_distractor, \
     lm_targets, lm_distractor, last_token, last_token_distractor = [], [], [], [], [], [], [], []
 
-    for i in range(batch_size):
+    for i in range(len(history)):
         distractor = choose_distractor()
-        wrds, wrds_dis, seg, seg_dis, lm_trgs, lm_dis, las, las_dis = build_training_data(history[i], reply[i], distractor)
+        wrds, wrds_dis, seg, seg_dis, lm_trgs, lm_dis, las, las_dis = build_training_data(history[i], reply[i],
+                                                                                          distractor)
         words.append(wrds)
         words_distractor.append(wrds_dis)
         segments.append(seg)
@@ -87,10 +88,54 @@ def forward(input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids):
 
 def train():
     optimizer = AdamW(model.parameters(), lr=0.01, correct_bias=True)
-    def update():
-        optimizer.zero_grad()
-        model.train()
-        input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids = build_trainging_data_batch(batch_size=200)
-        loss = forward(input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids)
-        loss.backward()
-        optimizer.step()
+    input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids = \
+        build_trainging_data_batch(history, reply)
+    from random import shuffle
+    spilt_len = 0.8 * len(input_ids)
+    logging.info("Preparing training and testing data ...")
+    logging.info(f"Training dataset has {spilt_len} data samples in total.")
+
+
+    input_ids_train, input_ids_test = shuffle(input_ids[:spilt_len]), shuffle(input_ids[spilt_len:])
+    mc_token_ids_train, mc_token_ids_test = shuffle(mc_token_ids[:spilt_len]), shuffle(mc_token_ids[spilt_len:])
+    lm_labels_train, lm_labels_test = shuffle(lm_labels[:spilt_len]), shuffle(lm_labels[spilt_len:])
+    mc_labels_train, mc_labels_test = shuffle(mc_labels[:spilt_len]), shuffle(mc_labels[spilt_len:])
+    token_type_ids_train, token_type_ids_test = shuffle(token_type_ids[:spilt_len]), shuffle(token_type_ids[spilt_len:])
+
+    epochs = 5
+    sample_num = 0
+    for epoch in range(epochs):
+        logging.info(f"Training epoch {epoch}")
+        logging.info("*" * epoch)
+        for ith in range(len(input_ids_train)):
+            logging.info(f"Training {ith}th examples")
+            logging.info("#" * sample_num)
+            # Training
+            model.train()
+            loss = forward(input_ids_train[ith], mc_token_ids_train[ith], lm_labels_train[ith],
+                           mc_labels_train[ith], token_type_ids_train[ith])
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+            sample_num += 1
+            if sample_num % 1000:
+                # Validate
+                model.eval()
+                from random import randint
+                index = randint(len(input_ids_test))
+                val_loss = forward(input_ids_test[index], mc_token_ids_test[index], lm_labels_test[index],
+                                   mc_labels_test[index], token_type_ids_train[index])
+                torch.save({
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'loss': loss,
+                    'val_loss': val_loss
+                }, "saved_models/model" + str(sample_num % 1000))
+                logging.info("Saving model ...")
+                logging.info(f"Training loss - {loss}")
+                logging.info(f"Validation loss - {val_loss}")
+
+
+if __name__ == '__main__':
+    train()

@@ -87,8 +87,6 @@ def get_history_reply_pairs():
             for i in range(2, turns):
                 history.append(dialog[:i - 1])
                 reply.append(dialog[i - 1])
-            print(f"history: {history}")
-            print(f"reply: {reply}")
         assert len(history) == len(reply)
     return history, reply
 
@@ -128,12 +126,8 @@ def print_input(words, segments, position, sequence):
     print("----------------------------------")
 
 
-distractor = choose_distractor()
-history, reply = get_history_reply_pairs()
+# distractor = choose_distractor()
+# history, reply = get_history_reply_pairs()
 
-print(distractor)
-print("-------------")
-print(history)
-print("-------------")
-print(reply)
+
 
