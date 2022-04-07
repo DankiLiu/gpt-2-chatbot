@@ -1,0 +1,11 @@
+{"special_tokens": [
+  "<bos>",
+  "<eos>",
+  "<customer>",
+  "<assistant>",
+  "<pad>",
+  "<br>"
+  ],
+  "file_id": 10,
+  "dialog_id": 0
+}
