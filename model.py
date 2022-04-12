@@ -31,17 +31,17 @@ def build_trainging_tensor_data(history, reply, distractor):
 
     # And gather reply and distractor inputs to build the input tensors:
     # words tokens
-    input_ids = torch.tensor([*words, *words_distractor], dtype=torch.long)
+    input_ids = torch.tensor([[*words, *words_distractor]], dtype=torch.long)
     print(f"input_ids        shape({input_ids.size()})")
     # segment tokens
-    token_type_ids = torch.tensor([*segments, *segments_distractor], dtype=torch.long)
+    token_type_ids = torch.tensor([[*segments, *segments_distractor]], dtype=torch.long)
     print(f"segment tokens   shape({token_type_ids.size()})")
     # Positions tokens can be automatically created by the model as (0, 1, ..., N)
     # Last tokens location
     mc_token_ids = torch.tensor([last_token, last_token_distractor], dtype=torch.long)
     print(f"mc_token_ids     shape({mc_token_ids.size()})")
     # Language modeling labels
-    lm_labels = torch.tensor([*lm_targets, *lm_distractor], dtype=torch.long)
+    lm_labels = torch.tensor([[*lm_targets, *lm_distractor]], dtype=torch.long)
     print(f"lm_labels        shape({lm_labels.size()})")
     # Next-sentence prediction labels
     mc_labels = torch.tensor([0], dtype=torch.long)  # Gold reply is 1st (index 0)
