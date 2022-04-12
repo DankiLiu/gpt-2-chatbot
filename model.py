@@ -7,7 +7,7 @@ from data_processing import *
 
 history, reply = get_history_reply_pairs()
 examples_len = len(history)
-spilt_len = 0.8 * examples_len
+spilt_len = int(0.8 * examples_len)
 
 model = OpenAIGPTDoubleHeadsModel.from_pretrained('openai-gpt')
 tokenizer = OpenAIGPTTokenizer.from_pretrained('openai-gpt')
