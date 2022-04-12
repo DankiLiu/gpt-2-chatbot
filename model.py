@@ -106,9 +106,10 @@ def train():
     optimizer = AdamW(model.parameters(), lr=0.01, correct_bias=True)
     from random import shuffle
     # Generate a random list of index
-    indexes = shuffle(i for i in range(0, examples_len))
-    train_indexes = indexes[...:spilt_len]
-    test_indexes = indexes[spilt_len:...]
+    indexes = [i for i in range(examples_len)]
+    shuffle(indexes)
+    train_indexes = indexes[:spilt_len]
+    test_indexes = indexes[spilt_len:]
     logging.info("Preparing training and testing data ...")
 
     epochs = 5
