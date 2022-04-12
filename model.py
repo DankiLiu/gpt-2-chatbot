@@ -6,40 +6,46 @@ from transformers import AdamW
 from data_processing import *
 
 history, reply = get_history_reply_pairs()
-distractor = choose_distractor()
+examples_len = len(history)
+spilt_len = 0.8 * examples_len
 
 model = OpenAIGPTDoubleHeadsModel.from_pretrained('openai-gpt')
 tokenizer = OpenAIGPTTokenizer.from_pretrained('openai-gpt')
 
+SPECIAL_TOKENS = [
+  "<bos>",
+  "<eos>",
+  "<customer>",
+  "<assistant>",
+  "<pad>",
+  "<br>"
+  ]
+tokenizer.set_special_tokens(SPECIAL_TOKENS)
+model.set_num_special_tokens(len(SPECIAL_TOKENS))
 
-def build_trainging_data_batch(history, reply):
+
+def build_trainging_tensor_data(history, reply, distractor):
     words, words_distractor, segments, segments_distractor, \
-    lm_targets, lm_distractor, last_token, last_token_distractor = [], [], [], [], [], [], [], []
+    lm_targets, lm_distractor, last_token, last_token_distractor = \
+        build_training_data(history, reply, distractor)
 
-    for i in range(len(history)):
-        distractor = choose_distractor()
-        wrds, wrds_dis, seg, seg_dis, lm_trgs, lm_dis, las, las_dis = build_training_data(history[i], reply[i],
-                                                                                          distractor)
-        words.append(wrds)
-        words_distractor.append(wrds_dis)
-        segments.append(seg)
-        segments_distractor.append(seg_dis)
-        lm_targets.append(lm_trgs)
-        lm_distractor.append(lm_dis)
-        last_token.append(las)
-        last_token_distractor.append(las_dis)
     # And gather reply and distractor inputs to build the input tensors:
     # words tokens
-    input_ids = torch.tensor([[words, words_distractor]], dtype=torch.long)
+    input_ids = torch.tensor([*words, *words_distractor], dtype=torch.long)
+    print(f"input_ids        shape({input_ids.size()})")
     # segment tokens
-    token_type_ids = torch.tensor([[segments, segments_distractor]], dtype=torch.long)
+    token_type_ids = torch.tensor([*segments, *segments_distractor], dtype=torch.long)
+    print(f"segment tokens   shape({token_type_ids.size()})")
     # Positions tokens can be automatically created by the model as (0, 1, ..., N)
     # Last tokens location
-    mc_token_ids = torch.tensor([[last_token, last_token_distractor]], dtype=torch.long)
+    mc_token_ids = torch.tensor([last_token, last_token_distractor], dtype=torch.long)
+    print(f"mc_token_ids     shape({mc_token_ids.size()})")
     # Language modeling labels
-    lm_labels = torch.tensor([[lm_targets, lm_distractor]], dtype=torch.long)
+    lm_labels = torch.tensor([*lm_targets, *lm_distractor], dtype=torch.long)
+    print(f"lm_labels        shape({lm_labels.size()})")
     # Next-sentence prediction labels
     mc_labels = torch.tensor([0], dtype=torch.long)  # Gold reply is 1st (index 0)
+    print(f"mc_labels        shape({mc_labels.size()})")
     return input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids
 
 
@@ -73,6 +79,16 @@ def build_training_data(history, reply, distractor):
                                        for x in (words, words_distractor, segments, segments_distractor)]
     (lm_targets, lm_distractor) = [pad(x, padding=tokenizer.convert_tokens_to_ids('<pad>'))
                                    for x in (lm_targets, lm_distractor)]
+    """
+    print(f"words len({len(words)})                  {words}")
+    print(f"words distractor len({len(words_distractor)})       {words_distractor}")
+    print(f"segments len({len(segments)})               {segments}")
+    print(f"segments distractor len({len(segments_distractor)})    {segments_distractor}")
+    print(f"lm target len({len(lm_targets)})              {lm_targets}")
+    print(f"lm distractor len({len(lm_distractor)})          {lm_distractor}")
+    print(f"last token type({type(last_token)})             {last_token}")
+    print(f"last token distractor len({type(last_token_distractor)})  {last_token_distractor}")
+    """
     return words, words_distractor, segments, segments_distractor, lm_targets, lm_distractor, last_token, last_token_distractor
 
 
@@ -88,32 +104,24 @@ def forward(input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids):
 
 def train():
     optimizer = AdamW(model.parameters(), lr=0.01, correct_bias=True)
-    input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids = \
-        build_trainging_data_batch(history, reply)
     from random import shuffle
-    spilt_len = 0.8 * len(input_ids)
+    # Generate a random list of index
+    indexes = shuffle(i for i in range(0, examples_len))
+    train_indexes = indexes[...:spilt_len]
+    test_indexes = indexes[spilt_len:...]
     logging.info("Preparing training and testing data ...")
-    logging.info(f"Training dataset has {spilt_len} data samples in total.")
-
-
-    input_ids_train, input_ids_test = shuffle(input_ids[:spilt_len]), shuffle(input_ids[spilt_len:])
-    mc_token_ids_train, mc_token_ids_test = shuffle(mc_token_ids[:spilt_len]), shuffle(mc_token_ids[spilt_len:])
-    lm_labels_train, lm_labels_test = shuffle(lm_labels[:spilt_len]), shuffle(lm_labels[spilt_len:])
-    mc_labels_train, mc_labels_test = shuffle(mc_labels[:spilt_len]), shuffle(mc_labels[spilt_len:])
-    token_type_ids_train, token_type_ids_test = shuffle(token_type_ids[:spilt_len]), shuffle(token_type_ids[spilt_len:])
 
     epochs = 5
     sample_num = 0
     for epoch in range(epochs):
         logging.info(f"Training epoch {epoch}")
         logging.info("*" * epoch)
-        for ith in range(len(input_ids_train)):
-            logging.info(f"Training {ith}th examples")
-            logging.info("#" * sample_num)
+        for train_index in train_indexes:
+            input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids = \
+                build_trainging_tensor_data(history[train_index], reply[train_index], choose_distractor())
             # Training
             model.train()
-            loss = forward(input_ids_train[ith], mc_token_ids_train[ith], lm_labels_train[ith],
-                           mc_labels_train[ith], token_type_ids_train[ith])
+            loss = forward(input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids)
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
@@ -121,10 +129,11 @@ def train():
             if sample_num % 1000:
                 # Validate
                 model.eval()
-                from random import randint
-                index = randint(len(input_ids_test))
-                val_loss = forward(input_ids_test[index], mc_token_ids_test[index], lm_labels_test[index],
-                                   mc_labels_test[index], token_type_ids_train[index])
+                from random import choice
+                test_index = choice(test_indexes)
+                input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids = \
+                    build_trainging_tensor_data(history[test_index], reply[test_index], choose_distractor())
+                val_loss = forward(input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids)
                 torch.save({
                     'epoch': epoch,
                     'model_state_dict': model.state_dict(),

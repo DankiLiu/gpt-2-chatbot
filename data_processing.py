@@ -47,26 +47,23 @@ def build_input(history, target):
     count = 0
     sequence = []
     for sen in history:
-        print("sen is: ", sen)
+        # print("sen is: ", sen)
         # Add dialog turns into the sequence with the token of the speaker
         pre = customer if count % 2 == 0 else assistant
         string = pre + ' ' + sen + ' ' + br if sequence \
             else bos + ' ' + pre + ' ' + sen + ' ' + br
-        print("sentence ", count, ": ", string)
+        # print("sentence ", count, ": ", string)
         sequence.append(string.split())
         count += 1
     target = customer + ' ' + target + ' ' + eos \
         if count % 2 == 0 else assistant + ' ' + target + ' ' + eos
     sequence.append(target.split())
-    print("add all the history sentences \n", sequence)
 
     # Build our word, segments and position inputs from the sequence
     words = list(chain(*sequence))
-    # print(f"words with length {len(words)}\n{words}")
     segments = [customer if i % 2 == 0 else assistant for i, s in enumerate(sequence) for _ in s]
-    # print(f"segments with length {len(segments)}\n{segments}")
+
     position = list(range(len(words)))
-    # print(f"position with length {len(position)}\n{position}")
 
     assert len(words) == len(segments) == len(position)
     return words, segments, position, sequence
