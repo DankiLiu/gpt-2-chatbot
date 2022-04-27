@@ -48,26 +48,27 @@ def build_training_data(history, reply):
     # Language model losses
     len_ignored = sum(len(s) for s in sentences[:-1])
     lm_targets = [-100] * len_ignored + tokenizer.convert_tokens_to_ids(sentences[-1])
-    print(lm_targets)
+    # print(lm_targets)
     attention_mask = ([0] * sum(len(s) for s in sentences[:-1])) + [1] * (len(sentences[-1]))
     assert len(token_ids) == len(ids) == len(lm_targets) == len(attention_mask)
-    print(tokenizer.convert_ids_to_tokens(ids))
+    # print(tokenizer.convert_ids_to_tokens(ids))
+    """
     print(f"words len({len(ids)})                  {ids}")
     print(f"segments len({len(token_ids)})               {token_ids}")
     print(f"lm target len({len(lm_targets)})              {lm_targets}")
-
+    """
     # Convert ids into Tensors
     # words tokens
     input_ids = torch.tensor([[*ids]], dtype=torch.long)
-    print(f"input_ids        shape({input_ids.size()})")
+    # print(f"input_ids        shape({input_ids.size()})")
     # segment tokens
     token_type_ids = torch.tensor([[*token_ids]], dtype=torch.long)
-    print(f"tokens_ids      shape({token_type_ids.size()})")
+    # print(f"tokens_ids      shape({token_type_ids.size()})")
     # Positions tokens can be automatically created by the model as (0, 1, ..., N)
 
     # Language modeling labels
     lm_labels = torch.tensor([[*lm_targets]], dtype=torch.long)
-    print(f"lm_labels        shape({lm_labels.size()})")
+    # print(f"lm_labels        shape({lm_labels.size()})")
 
     return input_ids, token_type_ids, lm_labels
 
@@ -117,6 +118,8 @@ def train():
                     'loss': output.loss,
                     'val_loss': val_loss.loss
                 }, "saved_models/model" + str(sample_num % 1000))
+                print("loss      - ", output.loss)
+                print("val_loss  - ", val_loss.loss)
                 logging.info("Saving model ...")
                 logging.info(f"Training loss - {output.loss}")
                 logging.info(f"Validation loss - {val_loss}")
