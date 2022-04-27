@@ -53,12 +53,12 @@ def build_input(history, target):
         string = pre + ' ' + sen + ' ' + br if sequence \
             else bos + ' ' + pre + ' ' + sen + ' ' + br
         # print("sentence ", count, ": ", string)
-        sequence.append(string.split())
+        sequence.append(string)
         count += 1
     target = customer + ' ' + target + ' ' + eos \
         if count % 2 == 0 else assistant + ' ' + target + ' ' + eos
-    sequence.append(target.split())
-
+    sequence.append(target)
+    '''
     # Build our word, segments and position inputs from the sequence
     words = list(chain(*sequence))
     segments = [customer if i % 2 == 0 else assistant for i, s in enumerate(sequence) for _ in s]
@@ -66,7 +66,8 @@ def build_input(history, target):
     position = list(range(len(words)))
 
     assert len(words) == len(segments) == len(position)
-    return words, segments, position, sequence
+    '''
+    return sequence, target
 
 
 def get_history_reply_pairs():
@@ -125,6 +126,4 @@ def print_input(words, segments, position, sequence):
 
 # distractor = choose_distractor()
 # history, reply = get_history_reply_pairs()
-
-
 
