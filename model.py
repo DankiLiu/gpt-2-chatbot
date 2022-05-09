@@ -139,7 +139,7 @@ def decode(history, model):
     input_ids, token_type_ids, _ = build_training_data(history, "")
     print("history is ", tokenizer.convert_ids_to_tokens(input_ids[0]))
     output_ids = model.generate(input_ids)
-    print(output_ids)
+    print("model output is: ", output_ids)
     """
     beam_outputs = model.generate(input_ids,
                                   max_length=50,
@@ -159,9 +159,8 @@ def decode(history, model):
         num = input("Please select a response from the above sentences: ")
     """
     response_tokens = tokenizer.convert_ids_to_tokens(output_ids[0])
-    print(response_tokens)
-    response = " ".join(output_ids)
-    print(response)
+    response = " ".join(response_tokens)
+    print("model output in string: ", response)
     return response
 
 
