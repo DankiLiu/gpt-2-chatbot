@@ -7,7 +7,7 @@ history, reply = get_history_reply_pairs()
 examples_len = len(history)
 spilt_len = int(0.8 * examples_len)
 
-model = GPT2LMHeadModel.from_pretrained('gpt2')
+
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 
 special_tokens_dict = {'bos_token': '<bos>',
@@ -19,8 +19,13 @@ special_tokens_dict = {'bos_token': '<bos>',
 special_tokens_dict1 = {'additional_special_tokens':
                             ['<bos>', '<eos>', '<customer>', '<assistant>', '<pad>', '<br>']}
 tokenizer.add_special_tokens(special_tokens_dict1)
-model.resize_token_embeddings(len(tokenizer))
-optimizer = AdamW(model.parameters(), lr=0.01, correct_bias=True)
+
+
+def init_model_optimizer(tokenizer):
+    model = GPT2LMHeadModel.from_pretrained('gpt2')
+    model.resize_token_embeddings(len(tokenizer))
+    optimizer = AdamW(model.parameters(), lr=0.01, correct_bias=True)
+    return model, optimizer
 
 
 def build_training_data(history, reply):
@@ -75,6 +80,8 @@ def build_training_data(history, reply):
 
 
 def train():
+    # If trained model exists, then load trained model, otherwise load pre-trained model.
+    model, optimizer = load_model()
     from random import shuffle
     # Generate a random list of index
     indexes = [i for i in range(examples_len)]
@@ -100,8 +107,8 @@ def train():
             optimizer.step()
             optimizer.zero_grad()
             sample_num += 1
-            if sample_num % 100000:
-                # Validate
+            if sample_num % 1000000:
+                # Validate after every 1000000 examples
                 model.eval()
                 from random import choice
                 test_index = choice(test_indexes)
@@ -111,28 +118,46 @@ def train():
                 val_loss = model(input_ids=ids,
                                  token_type_ids=token_ids,
                                  labels=lm_targets)
-                torch.save({
-                    'epoch': epoch,
-                    'model_state_dict': model.state_dict(),
-                    'optimizer_state_dict': optimizer.state_dict(),
-                    'loss': output.loss,
-                    'val_loss': val_loss.loss
-                }, "saved_models/model" + str(sample_num % 1000))
+                print("epoch     - ", epoch)
                 print("loss      - ", output.loss)
                 print("val_loss  - ", val_loss.loss)
-                logging.info("Saving model ...")
-                logging.info(f"Training loss - {output.loss}")
-                logging.info(f"Validation loss - {val_loss}")
+        # Validate after one epoch
+        model.eval()
+        from random import choice
+        test_index = choice(test_indexes)
+
+        ids, token_ids, lm_targets = \
+            build_training_data(history[test_index], reply[test_index])
+        val_loss = model(input_ids=ids,
+                         token_type_ids=token_ids,
+                         labels=lm_targets)
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'val_loss': val_loss.loss
+        }, "saved_models/model" + str(sample_num % 1000))
+        print("epoch     - ", epoch)
+        print("val_loss  - ", val_loss.loss)
+        logging.info("Saving model ...")
+        logging.info(f"Validation loss - {val_loss}")
 
 
-def load_model(file="saved_models/model8"):
-    checkpoint = torch.load(file)
+def load_model():
+    import glob
+    import os
+    model_files = glob.glob('saved_models/*')
+    model, optimizer = init_model_optimizer(tokenizer)
+    if not model_files:
+        return model, optimizer
+    last_model_file = max(model_files, key=os.path.getctime)
+    checkpoint = torch.load(last_model_file)
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     epoch = checkpoint['epoch']
     loss = checkpoint['loss']
-    model.eval()
-    return model
+    print(f"load model with epoch {epoch} and loss {loss}")
+    return model, optimizer
 
 
 def decode(history, model):
@@ -166,7 +191,8 @@ def decode(history, model):
 
 def evaluate_model():
     history = []
-    model = load_model()
+    model, optimizer = load_model()
+    model.eval()
     while True:
         value = input("Please enter a sentence (input q to quit): ")
         if value == 'q':
@@ -177,4 +203,5 @@ def evaluate_model():
 
 
 if __name__ == '__main__':
-    evaluate_model()
+    # evaluate_model()
+    train()
