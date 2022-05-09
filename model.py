@@ -137,7 +137,7 @@ def load_model(file="saved_models/model8"):
 
 def decode(history, model):
     input_ids, token_type_ids, _ = build_training_data(history, "")
-    print("history is ", tokenizer.convert_ids_to_tokens(input_ids))
+    print("history is ", tokenizer.convert_ids_to_tokens(input_ids[0]))
     output_ids = model.generate(input_ids)
     print(output_ids)
     """
@@ -158,8 +158,7 @@ def decode(history, model):
     if int(num) not in range(len(beam_outputs)+1):
         num = input("Please select a response from the above sentences: ")
     """
-
-    response_tokens = tokenizer.convert_ids_to_tokens(output_ids)
+    response_tokens = tokenizer.convert_ids_to_tokens(output_ids[0])
     print(response_tokens)
     response = " ".join(output_ids)
     print(response)
