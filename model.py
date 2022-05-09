@@ -125,7 +125,7 @@ def train():
                 logging.info(f"Validation loss - {val_loss}")
 
 
-def load_model(file="saved_models/model30"):
+def load_model(file="saved_models/model8"):
     checkpoint = torch.load(file)
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -145,6 +145,7 @@ def decode(history, model):
                                   early_stopping=True
                                   )
     print("Output:\n" + 100 * '-')
+    print(beam_outputs)
     for i, beam_output in enumerate(beam_outputs):
         output_ids = tokenizer.convert_ids_to_tokens(beam_output)
         output = " ".join(output_ids)
