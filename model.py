@@ -20,6 +20,7 @@ special_tokens_dict1 = {'additional_special_tokens':
                             ['<bos>', '<eos>', '<customer>', '<assistant>', '<pad>', '<br>']}
 tokenizer.add_special_tokens(special_tokens_dict1)
 model.resize_token_embeddings(len(tokenizer))
+optimizer = AdamW(model.parameters(), lr=0.01, correct_bias=True)
 
 
 def build_training_data(history, reply):
@@ -74,7 +75,6 @@ def build_training_data(history, reply):
 
 
 def train():
-    optimizer = AdamW(model.parameters(), lr=0.01, correct_bias=True)
     from random import shuffle
     # Generate a random list of index
     indexes = [i for i in range(examples_len)]
@@ -100,7 +100,7 @@ def train():
             optimizer.step()
             optimizer.zero_grad()
             sample_num += 1
-            if sample_num % 10000:
+            if sample_num % 100000:
                 # Validate
                 model.eval()
                 from random import choice
@@ -125,5 +125,46 @@ def train():
                 logging.info(f"Validation loss - {val_loss}")
 
 
+def load_model(file="saved_models/model30"):
+    checkpoint = torch.load(file)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    epoch = checkpoint['epoch']
+    loss = checkpoint['loss']
+    model.eval()
+    return model
+
+
+def decode(history, model):
+    input_ids, token_type_ids, _ = build_training_data(history, "")
+    beam_outputs = model.generate(input_ids,
+                                  max_length=50,
+                                  num_beams=5,
+                                  no_repeat_ngram_size=2,
+                                  num_return_sequences=5,
+                                  early_stopping=True
+                                  )
+    print("Output:\n" + 100 * '-')
+    for i, beam_output in enumerate(beam_outputs):
+        print("{}: {}".format(i, tokenizer.decode(beam_output, skip_special_tokens=True)))
+    num = input("Please select a response from the above sentences: ")
+    if int(num) not in range(len(beam_outputs)+1):
+        num = input("Please select a response from the above sentences: ")
+    selected_response = beam_outputs[int(num)-1]
+    return selected_response
+
+
+def evaluate_model():
+    history = []
+    model = load_model()
+    while True:
+        value = input("Please enter a sentence (input q to quit): ")
+        if value == 'q':
+            break
+        history.append(value)
+        selected_response = decode(history, model)
+        history.append(selected_response)
+
+
 if __name__ == '__main__':
-    train()
+    evaluate_model()
