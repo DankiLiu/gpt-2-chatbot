@@ -137,6 +137,7 @@ def load_model(file="saved_models/model8"):
 
 def decode(history, model):
     input_ids, token_type_ids, _ = build_training_data(history, "")
+    print("history is ", tokenizer.convert_ids_to_tokens(input_ids))
     output_ids = model.generate(input_ids)
     print(output_ids)
     """
