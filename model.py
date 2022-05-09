@@ -146,12 +146,15 @@ def decode(history, model):
                                   )
     print("Output:\n" + 100 * '-')
     for i, beam_output in enumerate(beam_outputs):
-        print("{}: {}".format(i, tokenizer.decode(beam_output, skip_special_tokens=True)))
+        output_ids = tokenizer.convert_ids_to_tokens(beam_output)
+        output = " ".join(output_ids)
+        print("{}: {}".format(i, output))
     num = input("Please select a response from the above sentences: ")
     if int(num) not in range(len(beam_outputs)+1):
         num = input("Please select a response from the above sentences: ")
-    selected_response = beam_outputs[int(num)-1]
-    return selected_response
+    output_ids = tokenizer.convert_ids_to_tokens(beam_outputs[int(num)-1])
+    output = " ".join(output_ids)
+    return output
 
 
 def evaluate_model():
