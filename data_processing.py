@@ -55,9 +55,11 @@ def build_input(history, target):
         # print("sentence ", count, ": ", string)
         sequence.append(string)
         count += 1
-    target = customer + ' ' + target + ' ' + eos \
-        if count % 2 == 0 else assistant + ' ' + target + ' ' + eos
-    sequence.append(target)
+    # If target do not exist, then no eos in the end of the sentence.
+    if target:
+        target = customer + ' ' + target + ' ' + eos \
+            if count % 2 == 0 else assistant + ' ' + target + ' ' + eos
+        sequence.append(target)
     '''
     # Build our word, segments and position inputs from the sequence
     words = list(chain(*sequence))

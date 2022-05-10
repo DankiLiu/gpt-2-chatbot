@@ -1,5 +1,6 @@
 import logging
 import torch
+import json
 from transformers import AdamW, GPT2LMHeadModel, GPT2Tokenizer
 from data_processing import *
 
@@ -23,6 +24,7 @@ tokenizer.add_special_tokens(special_tokens_dict1)
 
 def init_model_optimizer(tokenizer):
     model = GPT2LMHeadModel.from_pretrained('gpt2')
+    model = model.cuda()
     model.resize_token_embeddings(len(tokenizer))
     optimizer = AdamW(model.parameters(), lr=0.01, correct_bias=True)
     return model, optimizer
@@ -79,9 +81,9 @@ def build_training_data(history, reply):
     return input_ids, token_type_ids, lm_labels
 
 
-def train():
+def train(from_checkpoint=False):
     # If trained model exists, then load trained model, otherwise load pre-trained model.
-    model, optimizer = load_model()
+    model, optimizer = load_model(from_checkpoint)
     from random import shuffle
     # Generate a random list of index
     indexes = [i for i in range(examples_len)]
@@ -100,9 +102,9 @@ def train():
                 build_training_data(history[train_index], reply[train_index])
             # Training
             model.train()
-            output = model(input_ids=ids,
-                           token_type_ids=token_ids,
-                           labels=lm_targets)
+            output = model(input_ids=ids.cuda(),
+                           token_type_ids=token_ids.cuda(),
+                           labels=lm_targets.cuda())
             output.loss.backward()
             optimizer.step()
             optimizer.zero_grad()
@@ -115,12 +117,32 @@ def train():
 
                 ids, token_ids, lm_targets = \
                     build_training_data(history[test_index], reply[test_index])
-                val_loss = model(input_ids=ids,
-                                 token_type_ids=token_ids,
-                                 labels=lm_targets)
+                val_loss = model(input_ids=ids.cuda(),
+                                 token_type_ids=token_ids.cuda(),
+                                 labels=lm_targets.cuda())
+                responses = model.generate(input_ids=ids.cuda(),
+                                           num_beams=3,
+                                           early_stopping=True)
+                sentences = []
+                for res in responses:
+                    sentences.append(tokenizer.decode(res))
+                print(sentences)
+                from datetime import datetime
+                training_info = {
+                    "time": datetime.now(),
+                    "epoch": epoch,
+                    "sample_size": sample_num,
+                    "loss": output.loss,
+                    "val_loss": val_loss.loss,
+                    "responses": sentences
+                }
+                training_infos = json.dump(training_info)
                 print("epoch     - ", epoch)
                 print("loss      - ", output.loss)
                 print("val_loss  - ", val_loss.loss)
+
+                with open('training_info.json', 'a') as outfile:
+                    outfile.write(training_infos)
         # Validate after one epoch
         model.eval()
         from random import choice
@@ -128,9 +150,9 @@ def train():
 
         ids, token_ids, lm_targets = \
             build_training_data(history[test_index], reply[test_index])
-        val_loss = model(input_ids=ids,
-                         token_type_ids=token_ids,
-                         labels=lm_targets)
+        val_loss = model(input_ids=ids.cuda(),
+                         token_type_ids=token_ids.cuda(),
+                         labels=lm_targets.cuda())
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
@@ -143,12 +165,12 @@ def train():
         logging.info(f"Validation loss - {val_loss}")
 
 
-def load_model():
+def load_model(from_checkpoint=False):
     import glob
     import os
     model_files = glob.glob('saved_models/*')
     model, optimizer = init_model_optimizer(tokenizer)
-    if not model_files:
+    if not model_files or not from_checkpoint:
         return model, optimizer
     last_model_file = max(model_files, key=os.path.getctime)
     checkpoint = torch.load(last_model_file)
@@ -204,4 +226,4 @@ def evaluate_model():
 
 if __name__ == '__main__':
     # evaluate_model()
-    train()
+    train(from_checkpoint=False)
