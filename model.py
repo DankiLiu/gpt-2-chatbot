@@ -237,4 +237,9 @@ def evaluate_model(from_checkpoint, cuda):
 
 if __name__ == '__main__':
     # evaluate_model()
-    train(from_checkpoint=False, cuda=False)
+    is_cuda = input("train with cuda? Please type 'y'")
+    if 'Y' or 'y':
+        is_cuda = True
+    else:
+        is_cuda = False
+    train(from_checkpoint=False, cuda=is_cuda)
