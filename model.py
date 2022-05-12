@@ -1,7 +1,7 @@
 import logging
 import torch
 import json
-from transformers import AdamW, GPT2LMHeadModel, GPT2Tokenizer
+from transformers import AdamW, GPT2LMHeadModel, GPT2Tokenizer, GPT2Config
 from data_processing import *
 
 history, reply = get_history_reply_pairs()
@@ -22,11 +22,14 @@ special_tokens_dict1 = {'additional_special_tokens':
 tokenizer.add_special_tokens(special_tokens_dict1)
 
 
-def init_model_optimizer(tokenizer):
+def init_model_optimizer(tokenizer, cuda=True):
     model = GPT2LMHeadModel.from_pretrained('gpt2')
-    model = model.cuda()
+    if cuda:
+        model = model.cuda()
     model.resize_token_embeddings(len(tokenizer))
     optimizer = AdamW(model.parameters(), lr=0.01, correct_bias=True)
+    print(f"original max length is {model.config.max_length}")
+    model.config.max_length = 1020
     return model, optimizer
 
 
@@ -68,22 +71,22 @@ def build_training_data(history, reply):
     # Convert ids into Tensors
     # words tokens
     input_ids = torch.tensor([[*ids]], dtype=torch.long)
-    # print(f"input_ids        shape({input_ids.size()})")
+    print(f"input_ids        shape({input_ids.size()})")
     # segment tokens
     token_type_ids = torch.tensor([[*token_ids]], dtype=torch.long)
-    # print(f"tokens_ids      shape({token_type_ids.size()})")
+    print(f"tokens_ids      shape({token_type_ids.size()})")
     # Positions tokens can be automatically created by the model as (0, 1, ..., N)
 
     # Language modeling labels
     lm_labels = torch.tensor([[*lm_targets]], dtype=torch.long)
-    # print(f"lm_labels        shape({lm_labels.size()})")
+    print(f"lm_labels        shape({lm_labels.size()})")
 
     return input_ids, token_type_ids, lm_labels
 
 
-def train(from_checkpoint=False):
+def train(from_checkpoint=False, cuda=True):
     # If trained model exists, then load trained model, otherwise load pre-trained model.
-    model, optimizer = load_model(from_checkpoint)
+    model, optimizer = load_model(from_checkpoint, cuda)
     from random import shuffle
     # Generate a random list of index
     indexes = [i for i in range(examples_len)]
@@ -102,9 +105,13 @@ def train(from_checkpoint=False):
                 build_training_data(history[train_index], reply[train_index])
             # Training
             model.train()
-            output = model(input_ids=ids.cuda(),
-                           token_type_ids=token_ids.cuda(),
-                           labels=lm_targets.cuda())
+            if cuda:
+                ids = ids.cuda()
+                token_ids = token_ids.cuda()
+                lm_targets = lm_targets.cuda()
+            output = model(input_ids=ids,
+                           token_type_ids=token_ids,
+                           labels=lm_targets)
             output.loss.backward()
             optimizer.step()
             optimizer.zero_grad()
@@ -117,10 +124,14 @@ def train(from_checkpoint=False):
 
                 ids, token_ids, lm_targets = \
                     build_training_data(history[test_index], reply[test_index])
-                val_loss = model(input_ids=ids.cuda(),
-                                 token_type_ids=token_ids.cuda(),
-                                 labels=lm_targets.cuda())
-                responses = model.generate(input_ids=ids.cuda(),
+                if cuda:
+                    ids = ids.cuda()
+                    token_ids = token_ids.cuda()
+                    lm_targets = lm_targets.cuda()
+                val_loss = model(input_ids=ids,
+                                 token_type_ids=token_ids,
+                                 labels=lm_targets)
+                responses = model.generate(input_ids=ids,
                                            num_beams=3,
                                            early_stopping=True)
                 sentences = []
@@ -165,11 +176,11 @@ def train(from_checkpoint=False):
         logging.info(f"Validation loss - {val_loss}")
 
 
-def load_model(from_checkpoint=False):
+def load_model(from_checkpoint=False, cuda=True):
     import glob
     import os
     model_files = glob.glob('saved_models/*')
-    model, optimizer = init_model_optimizer(tokenizer)
+    model, optimizer = init_model_optimizer(tokenizer, cuda)
     if not model_files or not from_checkpoint:
         return model, optimizer
     last_model_file = max(model_files, key=os.path.getctime)
@@ -211,9 +222,9 @@ def decode(history, model):
     return response
 
 
-def evaluate_model():
+def evaluate_model(from_checkpoint, cuda):
     history = []
-    model, optimizer = load_model()
+    model, optimizer = load_model(from_checkpoint, cuda)
     model.eval()
     while True:
         value = input("Please enter a sentence (input q to quit): ")
@@ -226,4 +237,4 @@ def evaluate_model():
 
 if __name__ == '__main__':
     # evaluate_model()
-    train(from_checkpoint=False)
+    train(from_checkpoint=False, cuda=False)
