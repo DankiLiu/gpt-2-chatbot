@@ -140,20 +140,20 @@ def train(from_checkpoint=False, cuda=True):
                 print(sentences)
                 from datetime import datetime
                 training_info = {
-                    "time": datetime.now(),
+                    "time": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
                     "epoch": epoch,
                     "sample_size": sample_num,
                     "loss": output.loss,
                     "val_loss": val_loss.loss,
                     "responses": sentences
                 }
-                training_infos = json.dump(training_info)
+                outfile = open('training_info.json', 'a')
+                json.dump(training_info, outfile, indent=6)
+                outfile.close()
                 print("epoch     - ", epoch)
                 print("loss      - ", output.loss)
                 print("val_loss  - ", val_loss.loss)
 
-                with open('training_info.json', 'a') as outfile:
-                    outfile.write(training_infos)
         # Validate after one epoch
         model.eval()
         from random import choice
