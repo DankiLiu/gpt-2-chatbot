@@ -42,6 +42,8 @@ def build_training_data(history, reply):
     ids = []
     token_ids = []
     sentences = []
+    print(history)
+    print(reply)
     for sentence in sequence:
         words = tokenizer.tokenize(sentence)
         sentences.append(words)
@@ -56,32 +58,37 @@ def build_training_data(history, reply):
         ids = [*ids, *tokenizer.convert_tokens_to_ids(words)]
     assert len(token_ids) == len(ids)
 
-    # Language model losses
-    len_ignored = sum(len(s) for s in sentences[:-1])
-    lm_targets = [-100] * len_ignored + tokenizer.convert_tokens_to_ids(sentences[-1])
-    # print(lm_targets)
-    attention_mask = ([0] * sum(len(s) for s in sentences[:-1])) + [1] * (len(sentences[-1]))
-    assert len(token_ids) == len(ids) == len(lm_targets) == len(attention_mask)
-    # print(tokenizer.convert_ids_to_tokens(ids))
-    """
-    print(f"words len({len(ids)})                  {ids}")
-    print(f"segments len({len(token_ids)})               {token_ids}")
-    print(f"lm target len({len(lm_targets)})              {lm_targets}")
-    """
-    # Convert ids into Tensors
-    # words tokens
-    input_ids = torch.tensor([[*ids]], dtype=torch.long)
-    print(f"input_ids        shape({input_ids.size()})")
-    # segment tokens
-    token_type_ids = torch.tensor([[*token_ids]], dtype=torch.long)
-    print(f"tokens_ids      shape({token_type_ids.size()})")
-    # Positions tokens can be automatically created by the model as (0, 1, ..., N)
+    if target:
+        # Language model losses
+        len_ignored = sum(len(s) for s in sentences[:-1])
+        lm_targets = [-100] * len_ignored + tokenizer.convert_tokens_to_ids(sentences[-1])
+        # print(lm_targets)
+        attention_mask = ([0] * sum(len(s) for s in sentences[:-1])) + [1] * (len(sentences[-1]))
+        assert len(token_ids) == len(ids) == len(lm_targets) == len(attention_mask)
+        # print(tokenizer.convert_ids_to_tokens(ids))
+        """
+        print(f"words len({len(ids)})                  {ids}")
+        print(f"segments len({len(token_ids)})               {token_ids}")
+        print(f"lm target len({len(lm_targets)})              {lm_targets}")
+        """
+        print(f"transfered to ids: \n{ids}\n{token_ids}")
+        # Convert ids into Tensors
+        # words tokens
+        input_ids = torch.tensor([[*ids]], dtype=torch.long)
+        print(f"input_ids        shape({input_ids.size()})")
+        # segment tokens
+        token_type_ids = torch.tensor([[*token_ids]], dtype=torch.long)
+        print(f"tokens_ids      shape({token_type_ids.size()})")
+        # Positions tokens can be automatically created by the model as (0, 1, ..., N)
 
-    # Language modeling labels
-    lm_labels = torch.tensor([[*lm_targets]], dtype=torch.long)
-    print(f"lm_labels        shape({lm_labels.size()})")
-
-    return input_ids, token_type_ids, lm_labels
+        # Language modeling labels
+        lm_labels = torch.tensor([[*lm_targets]], dtype=torch.long)
+        print(f"lm_labels        shape({lm_labels.size()})")
+        return input_ids, token_type_ids, lm_labels
+    else:
+        input_ids = torch.tensor([[*ids]], dtype=torch.long)
+        token_type_ids = torch.tensor([[*token_ids]], dtype=torch.long)
+        return input_ids, token_type_ids, None
 
 
 def train(from_checkpoint=False, cuda=True):
@@ -122,37 +129,43 @@ def train(from_checkpoint=False, cuda=True):
                 from random import choice
                 test_index = choice(test_indexes)
 
-                ids, token_ids, lm_targets = \
-                    build_training_data(history[test_index], reply[test_index])
+                ids, token_ids, _ = \
+                    build_training_data(history[test_index], None)
                 if cuda:
                     ids = ids.cuda()
-                    token_ids = token_ids.cuda()
-                    lm_targets = lm_targets.cuda()
+                    # token_ids = token_ids.cuda()
+                    # lm_targets = lm_targets.cuda()
+                """
                 val_loss = model(input_ids=ids,
                                  token_type_ids=token_ids,
-                                 labels=lm_targets)
+                                 labels=lm_targets)              
+                """
                 responses = model.generate(input_ids=ids,
                                            num_beams=3,
                                            early_stopping=True)
-                sentences = []
+                print(f"input sentences: {tokenizer.convert_ids_to_tokens(ids[0])}")
+                print(f"ids: {ids}")
+                print(f"model output: {responses[0]}")
+                print(f"model response: {tokenizer.convert_ids_to_tokens(responses[0])}")
+                print(f"model decode: {tokenizer.decode(responses[0])}")
+                # sentences = []
+                """
                 for res in responses:
                     sentences.append(tokenizer.decode(res))
-                print(sentences)
+                """
                 from datetime import datetime
                 training_info = {
                     "time": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
                     "epoch": epoch,
                     "sample_size": sample_num,
-                    "loss": output.loss,
-                    "val_loss": val_loss.loss,
-                    "responses": sentences
+                    "loss": output.loss
                 }
                 outfile = open('training_info.json', 'a')
                 json.dump(training_info, outfile, indent=6)
                 outfile.close()
                 print("epoch     - ", epoch)
                 print("loss      - ", output.loss)
-                print("val_loss  - ", val_loss.loss)
+                # print("val_loss  - ", val_loss.loss)
 
         # Validate after one epoch
         model.eval()
@@ -237,9 +250,11 @@ def evaluate_model(from_checkpoint, cuda):
 
 if __name__ == '__main__':
     # evaluate_model()
+    """
     is_cuda = input("train with cuda? Please type 'y'")
     if 'Y' or 'y':
         is_cuda = True
     else:
         is_cuda = False
-    train(from_checkpoint=False, cuda=is_cuda)
+    """
+    train(from_checkpoint=False, cuda=True)
