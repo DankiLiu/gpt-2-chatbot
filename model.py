@@ -143,8 +143,7 @@ def train(from_checkpoint=False, cuda=True):
                 responses = model.generate(input_ids=ids,
                                            max_length=50)
 
-                print(f"Model evaluation: with \ninput: {history[test_index]}"
-                      f"\nmodel response: {tokenizer.convert_ids_to_tokens(responses[0])}")
+                print(f"Model evaluation: \ninput: {history[test_index]}")
                 print(f"model decode: {tokenizer.decode(responses[0])}")
                 # sentences = []
                 """
