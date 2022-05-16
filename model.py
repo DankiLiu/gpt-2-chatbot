@@ -141,12 +141,10 @@ def train(from_checkpoint=False, cuda=True):
                                  labels=lm_targets)              
                 """
                 responses = model.generate(input_ids=ids,
-                                           num_beams=3,
-                                           early_stopping=True)
-                print(f"input sentences: {tokenizer.convert_ids_to_tokens(ids[0])}")
-                print(f"ids: {ids}")
-                print(f"model output: {responses[0]}")
-                print(f"model response: {tokenizer.convert_ids_to_tokens(responses[0])}")
+                                           max_length=50)
+
+                print(f"Model evaluation: with \ninput: {history[test_index]}"
+                      f"\nmodel response: {tokenizer.convert_ids_to_tokens(responses[0])}")
                 print(f"model decode: {tokenizer.decode(responses[0])}")
                 # sentences = []
                 """
@@ -158,7 +156,7 @@ def train(from_checkpoint=False, cuda=True):
                     "time": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
                     "epoch": epoch,
                     "sample_size": sample_num,
-                    "loss": output.loss
+                    "loss": str(output.loss)
                 }
                 outfile = open('training_info.json', 'a')
                 json.dump(training_info, outfile, indent=6)
@@ -172,11 +170,10 @@ def train(from_checkpoint=False, cuda=True):
         from random import choice
         test_index = choice(test_indexes)
 
-        ids, token_ids, lm_targets = \
-            build_training_data(history[test_index], reply[test_index])
+        ids, token_ids, _ = \
+            build_training_data(history[test_index], None)
         val_loss = model(input_ids=ids.cuda(),
-                         token_type_ids=token_ids.cuda(),
-                         labels=lm_targets.cuda())
+                         token_type_ids=token_ids.cuda())
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
