@@ -71,19 +71,19 @@ def build_training_data(history, reply):
         print(f"segments len({len(token_ids)})               {token_ids}")
         print(f"lm target len({len(lm_targets)})              {lm_targets}")
         """
-        print(f"transfered to ids: \n{ids}\n{token_ids}")
+        # print(f"transfered to ids: \n{ids}\n{token_ids}")
         # Convert ids into Tensors
         # words tokens
         input_ids = torch.tensor([[*ids]], dtype=torch.long)
-        print(f"input_ids        shape({input_ids.size()})")
+        # print(f"input_ids        shape({input_ids.size()})")
         # segment tokens
         token_type_ids = torch.tensor([[*token_ids]], dtype=torch.long)
-        print(f"tokens_ids      shape({token_type_ids.size()})")
+        # print(f"tokens_ids      shape({token_type_ids.size()})")
         # Positions tokens can be automatically created by the model as (0, 1, ..., N)
 
         # Language modeling labels
         lm_labels = torch.tensor([[*lm_targets]], dtype=torch.long)
-        print(f"lm_labels        shape({lm_labels.size()})")
+        # print(f"lm_labels        shape({lm_labels.size()})")
         return input_ids, token_type_ids, lm_labels
     else:
         input_ids = torch.tensor([[*ids]], dtype=torch.long)
