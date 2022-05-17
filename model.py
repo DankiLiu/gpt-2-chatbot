@@ -40,6 +40,7 @@ def build_training_data(history, reply):
     """
     input_seq = build_training_input(history, reply)
     label_seq = build_training_label(history, reply)
+    assert len(input_seq) == len(label_seq)
     print(f"input sequence: {input_seq}\nlabel sequence: {label_seq}")
     # sequence, target, sequence_no_nos, target_no_eos = build_input(history, reply)
     def token_ids(sequence):
@@ -60,16 +61,18 @@ def build_training_data(history, reply):
                 token_ids = [*token_ids, *len(tokenizer.tokenize(segments)) * [1]]
             ids = [*ids, *tokenizer.convert_tokens_to_ids(words)]
             assert len(token_ids) == len(ids)
-            return ids, token_ids, sentences
+        return ids, token_ids, sentences
 
     input_ids, input_token_ids, input_sentences = token_ids(input_seq)
     label_ids, label_token_ids, label_sentences = token_ids(label_seq)
-
+    print("input ids: ", input_ids)
+    print("label ids", label_ids)
+    """add padding here"""
     len_ignored = sum(len(s) for s in label_sentences[:-1])
     lm_targets = [-100] * len_ignored + tokenizer.convert_tokens_to_ids(label_sentences[-1])
     # print(lm_targets)
     # attention_mask = ([0] * sum(len(s) for s in sentences[:-1])) + [1] * (len(sentences[-1]))
-    assert len(input_token_ids) == len(input_ids) == len(lm_targets)
+    # assert len(input_token_ids) == len(input_ids) == len(lm_targets)
     # Convert ids into Tensors
     # words tokens
     input_ids = torch.tensor([[*input_ids]], dtype=torch.long)
@@ -205,11 +208,5 @@ def evaluate_model(from_checkpoint, cuda):
 
 if __name__ == '__main__':
     # evaluate_model()
-    """
-    is_cuda = input("train with cuda? Please type 'y'")
-    if 'Y' or 'y':
-        is_cuda = True
-    else:
-        is_cuda = False
-    """
-    train(from_checkpoint=False, cuda=True)
+    cuda = torch.cuda.is_available()
+    train(from_checkpoint=False, cuda=cuda)
