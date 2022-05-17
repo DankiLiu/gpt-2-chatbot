@@ -30,17 +30,12 @@ def generate_dialogs4all():
     for filename in os.listdir(directory):
         print(f"generating file for {filename} in {directory} ...")
         f = os.path.join(directory, filename)
-        print(f)
         generate_dialogs(f, count)
         count += 1
 
 
-def build_input(history, target):
-    """
-    Build input for language model.
-    history: a list of strings
-    reply: a string
-    """
+def build_training_input(history, target):
+    """Build input for training, input begins with <bos>"""
     with open("config.json") as config:
         data = json.load(config)
     bos, eos, customer, assistant, pad, br = data["special_tokens"]
@@ -55,8 +50,59 @@ def build_input(history, target):
         # print("sentence ", count, ": ", string)
         sequence.append(string)
         count += 1
+
+    target = customer + ' ' + target \
+        if count % 2 == 0 else assistant + ' ' + target
+    sequence.append(target)
+    return sequence
+
+
+def build_training_label(history, target):
+    """Build label for training, output ends with <eos>"""
+    with open("config.json") as config:
+        data = json.load(config)
+    bos, eos, customer, assistant, pad, br = data["special_tokens"]
+    count = 0
+    sequence = []
+    for sen in history:
+        # Add dialog turns into the sequence with the token of the speaker
+        pre = customer if count % 2 == 0 else assistant
+        string = pre + ' ' + sen + ' ' + br
+        sequence.append(string)
+        count += 1
+    target = customer + ' ' + target \
+        if count % 2 == 0 else assistant + ' ' + target + ' ' + eos
+    sequence.append(target)
+    return sequence
+
+
+def build_input(history, target):
+    """
+    Build input for language model.
+    history: a list of strings
+    reply: a string
+    """
+    with open("config.json") as config:
+        data = json.load(config)
+    bos, eos, customer, assistant, pad, br = data["special_tokens"]
+    count = 0
+    sequence = []
+    sequence_no_eos = []
+    for sen in history:
+        # print("sen is: ", sen)
+        # Add dialog turns into the sequence with the token of the speaker
+        pre = customer if count % 2 == 0 else assistant
+        string_no_bos = pre + ' ' + sen + ' ' + br
+        string = pre + ' ' + sen + ' ' + br if sequence \
+            else bos + ' ' + pre + ' ' + sen + ' ' + br
+        # print("sentence ", count, ": ", string)
+        sequence.append(string)
+        sequence_no_eos.append(string_no_bos)
+        count += 1
     # If target do not exist, then no eos in the end of the sentence.
     if target:
+        target_no_eos = customer + ' ' + target \
+            if count % 2 == 0 else assistant + ' ' + target
         target = customer + ' ' + target + ' ' + eos \
             if count % 2 == 0 else assistant + ' ' + target + ' ' + eos
         sequence.append(target)
@@ -69,7 +115,7 @@ def build_input(history, target):
 
     assert len(words) == len(segments) == len(position)
     '''
-    return sequence, target
+    return sequence, target, sequence_no_eos
 
 
 def get_history_reply_pairs():

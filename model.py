@@ -38,57 +38,49 @@ def build_training_data(history, reply):
     Build training or testing data for training
     return input and target
     """
-    sequence, target = build_input(history, reply)
-    ids = []
-    token_ids = []
-    sentences = []
-    print(history)
-    print(reply)
-    for sentence in sequence:
-        words = tokenizer.tokenize(sentence)
-        sentences.append(words)
-        if '<customer>' in words:
-            segments = '<customer> ' * len(words)
-            # token_ids = [*token_ids, *tokenizer.convert_tokens_to_ids(tokenizer.tokenize(segments))]
-            token_ids = [*token_ids, *len(tokenizer.tokenize(segments)) * [0]]
-        elif '<assistant>' in words:
-            segments = '<assistant> ' * len(words)
-            # token_ids = [*token_ids, *tokenizer.convert_tokens_to_ids(tokenizer.tokenize(segments))]
-            token_ids = [*token_ids, *len(tokenizer.tokenize(segments)) * [1]]
-        ids = [*ids, *tokenizer.convert_tokens_to_ids(words)]
-    assert len(token_ids) == len(ids)
+    input_seq = build_training_input(history, reply)
+    label_seq = build_training_label(history, reply)
+    print(f"input sequence: {input_seq}\nlabel sequence: {label_seq}")
+    # sequence, target, sequence_no_nos, target_no_eos = build_input(history, reply)
+    def token_ids(sequence):
+        sentences = []
+        token_ids = []
+        ids = []
+        for sentence in sequence:
+            words = tokenizer.tokenize(sentence)
+            sentences.append(words)
+            # build token_ids
+            if '<customer>' in words:
+                segments = '<customer> ' * len(words)
+                # token_ids = [*token_ids, *tokenizer.convert_tokens_to_ids(tokenizer.tokenize(segments))]
+                token_ids = [*token_ids, *len(tokenizer.tokenize(segments)) * [0]]
+            elif '<assistant>' in words:
+                segments = '<assistant> ' * len(words)
+                # token_ids = [*token_ids, *tokenizer.convert_tokens_to_ids(tokenizer.tokenize(segments))]
+                token_ids = [*token_ids, *len(tokenizer.tokenize(segments)) * [1]]
+            ids = [*ids, *tokenizer.convert_tokens_to_ids(words)]
+            assert len(token_ids) == len(ids)
+            return ids, token_ids, sentences
 
-    if target:
-        # Language model losses
-        len_ignored = sum(len(s) for s in sentences[:-1])
-        lm_targets = [-100] * len_ignored + tokenizer.convert_tokens_to_ids(sentences[-1])
-        # print(lm_targets)
-        attention_mask = ([0] * sum(len(s) for s in sentences[:-1])) + [1] * (len(sentences[-1]))
-        assert len(token_ids) == len(ids) == len(lm_targets) == len(attention_mask)
-        # print(tokenizer.convert_ids_to_tokens(ids))
-        """
-        print(f"words len({len(ids)})                  {ids}")
-        print(f"segments len({len(token_ids)})               {token_ids}")
-        print(f"lm target len({len(lm_targets)})              {lm_targets}")
-        """
-        # print(f"transfered to ids: \n{ids}\n{token_ids}")
-        # Convert ids into Tensors
-        # words tokens
-        input_ids = torch.tensor([[*ids]], dtype=torch.long)
-        # print(f"input_ids        shape({input_ids.size()})")
-        # segment tokens
-        token_type_ids = torch.tensor([[*token_ids]], dtype=torch.long)
-        # print(f"tokens_ids      shape({token_type_ids.size()})")
-        # Positions tokens can be automatically created by the model as (0, 1, ..., N)
+    input_ids, input_token_ids, input_sentences = token_ids(input_seq)
+    label_ids, label_token_ids, label_sentences = token_ids(lable_seq)
 
-        # Language modeling labels
-        lm_labels = torch.tensor([[*lm_targets]], dtype=torch.long)
-        # print(f"lm_labels        shape({lm_labels.size()})")
-        return input_ids, token_type_ids, lm_labels
-    else:
-        input_ids = torch.tensor([[*ids]], dtype=torch.long)
-        token_type_ids = torch.tensor([[*token_ids]], dtype=torch.long)
-        return input_ids, token_type_ids, None
+    len_ignored = sum(len(s) for s in label_sentences[:-1])
+    lm_targets = [-100] * len_ignored + tokenizer.convert_tokens_to_ids(label_sentences[-1])
+    # print(lm_targets)
+    # attention_mask = ([0] * sum(len(s) for s in sentences[:-1])) + [1] * (len(sentences[-1]))
+    assert len(input_token_ids) == len(input_ids) == len(lm_targets)
+    # Convert ids into Tensors
+    # words tokens
+    input_ids = torch.tensor([[*input_ids]], dtype=torch.long)
+    print(f"input_ids        shape({input_ids.size()})")
+    # segment tokens
+    token_type_ids = torch.tensor([[*input_token_ids]], dtype=torch.long)
+    print(f"tokens_ids      shape({token_type_ids.size()})")
+    # Language modeling labels
+    lm_labels = torch.tensor([[*lm_targets]], dtype=torch.long)
+    print(f"lm_labels        shape({lm_labels.size()})")
+    return input_ids, token_type_ids, lm_labels
 
 
 def train(from_checkpoint=False, cuda=True):
@@ -142,14 +134,12 @@ def train(from_checkpoint=False, cuda=True):
                 """
                 responses = model.generate(input_ids=ids,
                                            max_length=50)
-
+                output = model(input_ids=ids,
+                               token_type_ids=token_ids)
                 print(f"Model evaluation: \ninput: {history[test_index]}")
                 print(f"model decode: {tokenizer.decode(responses[0])}")
-                # sentences = []
-                """
-                for res in responses:
-                    sentences.append(tokenizer.decode(res))
-                """
+                print(f"model output: {tokenizer.decode(output)}")
+
                 from datetime import datetime
                 training_info = {
                     "time": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
@@ -202,35 +192,6 @@ def load_model(from_checkpoint=False, cuda=True):
     return model, optimizer
 
 
-def decode(history, model):
-    input_ids, token_type_ids, _ = build_training_data(history, "")
-    print("history is ", tokenizer.convert_ids_to_tokens(input_ids[0]))
-    output_ids = model.generate(input_ids)
-    print("model output is: ", output_ids)
-    """
-    beam_outputs = model.generate(input_ids,
-                                  max_length=50,
-                                  num_beams=5,
-                                  no_repeat_ngram_size=2,
-                                  num_return_sequences=5,
-                                  early_stopping=True
-                                  )
-    print("Output:\n" + 100 * '-')
-    print(beam_outputs)
-    for i, beam_output in enumerate(beam_outputs):
-        output_ids = tokenizer.convert_ids_to_tokens(beam_output)
-        output = " ".join(output_ids)
-        print("{}: {}".format(i, output))
-    num = input("Please select a response from the above sentences: ")
-    if int(num) not in range(len(beam_outputs)+1):
-        num = input("Please select a response from the above sentences: ")
-    """
-    response_tokens = tokenizer.convert_ids_to_tokens(output_ids[0])
-    response = " ".join(response_tokens)
-    print("model output in string: ", response)
-    return response
-
-
 def evaluate_model(from_checkpoint, cuda):
     history = []
     model, optimizer = load_model(from_checkpoint, cuda)
@@ -240,8 +201,6 @@ def evaluate_model(from_checkpoint, cuda):
         if value == 'q':
             break
         history.append(value)
-        selected_response = decode(history, model)
-        history.append(selected_response)
 
 
 if __name__ == '__main__':
