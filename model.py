@@ -63,7 +63,7 @@ def build_training_data(history, reply):
             return ids, token_ids, sentences
 
     input_ids, input_token_ids, input_sentences = token_ids(input_seq)
-    label_ids, label_token_ids, label_sentences = token_ids(lable_seq)
+    label_ids, label_token_ids, label_sentences = token_ids(label_seq)
 
     len_ignored = sum(len(s) for s in label_sentences[:-1])
     lm_targets = [-100] * len_ignored + tokenizer.convert_tokens_to_ids(label_sentences[-1])
