@@ -51,8 +51,9 @@ def build_training_input(history, target):
         sequence.append(string)
         count += 1
 
-    target = customer + ' ' + target \
-        if count % 2 == 0 else assistant + ' ' + target
+    if target:
+        target = customer + ' ' + target \
+            if count % 2 == 0 else assistant + ' ' + target
     sequence.append(target)
     return sequence
 
@@ -70,8 +71,9 @@ def build_training_label(history, target):
         string = pre + ' ' + sen + ' ' + br
         sequence.append(string)
         count += 1
-    target = customer + ' ' + target + ' ' + eos \
-        if count % 2 == 0 else assistant + ' ' + target + ' ' + eos
+    if target:
+        target = customer + ' ' + target + ' ' + eos \
+            if count % 2 == 0 else assistant + ' ' + target + ' ' + eos
     sequence.append(target)
     return sequence
 
