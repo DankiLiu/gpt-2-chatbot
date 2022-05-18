@@ -28,7 +28,7 @@ def init_model_optimizer(tokenizer, cuda=True):
         model = model.cuda()
     model.resize_token_embeddings(len(tokenizer))
     optimizer = AdamW(model.parameters(), lr=0.01, correct_bias=True)
-    print(f"original max length is {model.config.max_length}")
+    # print(f"original max length is {model.config.max_length}")
     model.config.max_length = 1020
     return model, optimizer
 
@@ -142,7 +142,7 @@ def train(from_checkpoint=False, cuda=True):
                 print(f"Model evaluation: \ninput: {history[test_index]}")
                 print(f"model decode: {tokenizer.decode(responses[0])}")
                 print(f"model output: {tokenizer.decode(output)}")
-
+                output.cpu()
                 from datetime import datetime
                 training_info = {
                     "time": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
@@ -166,6 +166,7 @@ def train(from_checkpoint=False, cuda=True):
             build_training_data(history[test_index], None)
         val_loss = model(input_ids=ids.cuda(),
                          token_type_ids=token_ids.cuda())
+        val_loss.cpu()
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
