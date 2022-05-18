@@ -41,7 +41,7 @@ def build_training_data(history, reply):
     input_seq = build_training_input(history, reply)
     label_seq = build_training_label(history, reply)
     assert len(input_seq) == len(label_seq)
-    print(f"input sequence: {input_seq}\nlabel sequence: {label_seq}")
+    # print(f"input sequence: {input_seq}\nlabel sequence: {label_seq}")
     # sequence, target, sequence_no_nos, target_no_eos = build_input(history, reply)
     def token_ids(sequence):
         sentences = []
@@ -65,8 +65,8 @@ def build_training_data(history, reply):
 
     input_ids, input_token_ids, input_sentences = token_ids(input_seq)
     label_ids, label_token_ids, label_sentences = token_ids(label_seq)
-    print("input ids: ", input_ids)
-    print("label ids", label_ids)
+    # print("input ids: ", input_ids)
+    # print("label ids", label_ids)
     """add padding here"""
     len_ignored = sum(len(s) for s in label_sentences[:-1])
     lm_targets = [-100] * len_ignored + tokenizer.convert_tokens_to_ids(label_sentences[-1])
@@ -142,7 +142,7 @@ def train(from_checkpoint=False, cuda=True):
                                token_type_ids=token_ids)
                 print(f"Model evaluation: \ninput: {history[test_index]}")
                 print(f"model decode: {tokenizer.decode(responses[0])}")
-                print(f"model output: {tokenizer.decode(output)}")
+                print(f"model output: {tokenizer.decode(output[0])}")
                 output.cpu()
                 from datetime import datetime
                 training_info = {
