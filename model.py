@@ -128,6 +128,7 @@ def train(from_checkpoint=False, cuda=True):
                     build_training_data(history[test_index], None)
                 if cuda:
                     ids = ids.cuda()
+                    token_ids = token_ids.cuda()
                     # token_ids = token_ids.cuda()
                     # lm_targets = lm_targets.cuda()
                 """
@@ -164,8 +165,11 @@ def train(from_checkpoint=False, cuda=True):
 
         ids, token_ids, _ = \
             build_training_data(history[test_index], None)
-        val_loss = model(input_ids=ids.cuda(),
-                         token_type_ids=token_ids.cuda())
+        if cuda:
+            ids = ids.cuda()
+            token_ids = token_ids.cuda()
+        val_loss = model(input_ids=ids,
+                         token_type_ids=token_ids)
         val_loss.cpu()
         torch.save({
             'epoch': epoch,
