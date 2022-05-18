@@ -143,7 +143,6 @@ def train(from_checkpoint=False, cuda=True):
                 print(f"Model evaluation: \ninput: {history[test_index]}")
                 print(f"model decode: {tokenizer.decode(responses[0])}")
                 # print(f"model output: {tokenizer.decode(output)}")
-                output.cpu()
                 from datetime import datetime
                 training_info = {
                     "time": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
@@ -170,7 +169,6 @@ def train(from_checkpoint=False, cuda=True):
             token_ids = token_ids.cuda()
         val_loss = model(input_ids=ids,
                          token_type_ids=token_ids)
-        val_loss.cpu()
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
