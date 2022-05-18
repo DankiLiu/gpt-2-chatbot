@@ -142,7 +142,7 @@ def train(from_checkpoint=False, cuda=True):
                                token_type_ids=token_ids)
                 print(f"Model evaluation: \ninput: {history[test_index]}")
                 print(f"model decode: {tokenizer.decode(responses[0])}")
-                print(f"model output: {tokenizer.decode(output[0])}")
+                # print(f"model output: {tokenizer.decode(output)}")
                 output.cpu()
                 from datetime import datetime
                 training_info = {
