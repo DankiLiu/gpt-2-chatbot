@@ -218,6 +218,8 @@ def model_evaluation():
             input_ids.cuda()
         print(f"model on cuda? {next(model.parameters()).is_cuda}\n"
               f"input_ids is on device {input_ids.get_device()}")
+        model.cpu()
+        input_ids.cpu()
         responses = model.generate(input_ids=input_ids)
         res_sen = tokenizer.decode(responses[0])
         print(f"input sentence: {sentence}")
