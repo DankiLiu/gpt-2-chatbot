@@ -198,18 +198,30 @@ def load_model(from_checkpoint=False, cuda=True):
     return model, optimizer
 
 
-def evaluate_model(from_checkpoint, cuda):
-    history = []
-    model, optimizer = load_model(from_checkpoint, cuda)
+def model_evaluation():
+    """Input a sentence and model makes prediction."""
+    cuda = torch.cuda.is_available()
+    print("---------Model Evaluation---------")
+    # load recent model
+    model, optimizer = load_model(True, cuda)
     model.eval()
+    # user input a sentence and model predict response
+    sentence = input("What can I do for you?\n")
     while True:
-        value = input("Please enter a sentence (input q to quit): ")
-        if value == 'q':
+        input_ids, _, _ = build_training_data([sentence], None)
+        #output = model(input_ids=input_ids,
+        #               token_type_ids=token_type_ids)
+        responses = model.generate(input_ids=input_ids)
+        res_sen = tokenizer.decode(responses[0])
+        print(f"input sentence: {sentence}")
+        print(f"model response: {res_sen}")
+        if res_sen.spilt(' ')[-1] == "<br>" or res_sen.spilt(' ')[-1] == "<eos>":
             break
-        history.append(value)
+        input_ids = responses
 
 
 if __name__ == '__main__':
     # evaluate_model()
-    cuda = torch.cuda.is_available()
-    train(from_checkpoint=False, cuda=cuda)
+    #cuda = torch.cuda.is_available()
+    #train(from_checkpoint=False, cuda=cuda)
+    model_evaluation()
