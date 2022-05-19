@@ -207,11 +207,10 @@ def model_evaluation():
     model.eval()
     # user input a sentence and model predict response
     sentence = input("What can I do for you?\n")
-    input_ids = None
+    input_ids, _, _ = build_training_data([sentence], None)
     while True:
-        input_ids, _, _ = build_training_data([sentence], None)
-        #output = model(input_ids=input_ids,
-        #               token_type_ids=token_type_ids)
+        if cuda:
+            input_ids.cuda()
         responses = model.generate(input_ids=input_ids)
         res_sen = tokenizer.decode(responses[0])
         print(f"input sentence: {sentence}")
