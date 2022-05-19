@@ -22,7 +22,7 @@ special_tokens_dict1 = {'additional_special_tokens':
 tokenizer.add_special_tokens(special_tokens_dict1)
 
 
-def init_model_optimizer(tokenizer, cuda=True):
+def init_model_optimizer(tokenizer, cuda):
     model = GPT2LMHeadModel.from_pretrained('gpt2')
     if cuda:
         model = model.cuda()
@@ -195,6 +195,8 @@ def load_model(from_checkpoint=False, cuda=True):
     epoch = checkpoint['epoch']
     loss = checkpoint['val_loss']
     print(f"load model with epoch {epoch} and loss {loss}")
+    if cuda:
+        model.cuda()
     return model, optimizer
 
 
@@ -204,6 +206,9 @@ def model_evaluation():
     print("---------Model Evaluation---------")
     # load recent model
     model, optimizer = load_model(True, cuda)
+    if cuda:
+        model.cuda()
+
     model.eval()
     # user input a sentence and model predict response
     sentence = input("What can I do for you?\n")
@@ -211,6 +216,8 @@ def model_evaluation():
     while True:
         if cuda:
             input_ids.cuda()
+        print(f"model on cuda? {next(model.parameters()).is_cuda}\n"
+              f"input_ids is on device {input_ids.get_device()}")
         responses = model.generate(input_ids=input_ids)
         res_sen = tokenizer.decode(responses[0])
         print(f"input sentence: {sentence}")
