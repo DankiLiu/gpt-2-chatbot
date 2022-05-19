@@ -193,7 +193,7 @@ def load_model(from_checkpoint=False, cuda=True):
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     epoch = checkpoint['epoch']
-    loss = checkpoint['loss']
+    loss = checkpoint['val_loss']
     print(f"load model with epoch {epoch} and loss {loss}")
     return model, optimizer
 
@@ -207,6 +207,7 @@ def model_evaluation():
     model.eval()
     # user input a sentence and model predict response
     sentence = input("What can I do for you?\n")
+    input_ids = None
     while True:
         input_ids, _, _ = build_training_data([sentence], None)
         #output = model(input_ids=input_ids,
