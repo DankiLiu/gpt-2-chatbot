@@ -38,7 +38,7 @@ def build_training_input(history, target):
     """Build input for training, input begins with <bos>"""
     with open("config.json") as config:
         data = json.load(config)
-    bos, eos, customer, assistant, pad, br = data["special_tokens"]
+    bos, eos, customer, assistant, pad, _ = data["special_tokens"]
     count = 0
     sequence = []
     for sen in history:
@@ -62,7 +62,7 @@ def build_training_label(history, target):
     """Build label for training, output ends with <eos>"""
     with open("config.json") as config:
         data = json.load(config)
-    bos, eos, customer, assistant, pad, br = data["special_tokens"]
+    bos, eos, customer, assistant, pad, _ = data["special_tokens"]
     count = 0
     sequence = []
     for sen in history:
@@ -86,7 +86,7 @@ def build_input(history, target):
     """
     with open("config.json") as config:
         data = json.load(config)
-    bos, eos, customer, assistant, pad, br = data["special_tokens"]
+    bos, eos, customer, assistant, pad, _ = data["special_tokens"]
     count = 0
     sequence = []
     sequence_no_eos = []
@@ -94,7 +94,7 @@ def build_input(history, target):
         # print("sen is: ", sen)
         # Add dialog turns into the sequence with the token of the speaker
         pre = customer if count % 2 == 0 else assistant
-        string_no_bos = pre + ' ' + sen + ' ' + br
+        string_no_bos = pre + ' ' + sen
         string = pre + ' ' + sen if sequence \
             else bos + ' ' + pre + ' ' + sen
         # print("sentence ", count, ": ", string)
@@ -123,7 +123,7 @@ def build_input(history, target):
 def get_history_reply_pairs():
     file_id, _ = read_from_json() # how many files are gonna be read
     history, reply = [], []
-    for file_num in range(1, file_id+1):
+    for file_num in range(1, file_id+1)
         file_name = "dialogs/" + "dialogs_" + str(file_num) + ".json"
         with open(file_name) as f:
             data = json.load(f)

@@ -229,13 +229,13 @@ def model_evaluation():
                                    skip_special_tokens=True)
         print(f"input sentence: {sentence}")
         print(f"model response: {res_sen}")
-        if res_sen.split(' ')[-1] == "<br>" or res_sen.spilt(' ')[-1] == "<eos>":
+        if res_sen.spilt(' ')[-1] == "<eos>":
             break
         input_ids = responses
 
 
 if __name__ == '__main__':
     # evaluate_model()
-    #cuda = torch.cuda.is_available()
-    #train(from_checkpoint=False, cuda=cuda)
-    model_evaluation()
+    cuda = torch.cuda.is_available()
+    train(from_checkpoint=False, cuda=cuda)
+    # model_evaluation()
