@@ -213,7 +213,8 @@ def model_evaluation():
 
     model.eval()
     # user input a sentence and model predict response
-    sentence = input("What can I do for you?\n")
+    sentence = "I want to book a cheap hotel."
+    print(f"request: {sentence}")
     input_ids, _, _ = build_training_data([sentence], None)
     while True:
         if cuda:
@@ -228,7 +229,7 @@ def model_evaluation():
                                    skip_special_tokens=True)
         print(f"input sentence: {sentence}")
         print(f"model response: {res_sen}")
-        if res_sen.spilt(' ')[-1] == "<br>" or res_sen.spilt(' ')[-1] == "<eos>":
+        if res_sen.split(' ')[-1] == "<br>" or res_sen.spilt(' ')[-1] == "<eos>":
             break
         input_ids = responses
 
