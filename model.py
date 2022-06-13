@@ -229,7 +229,7 @@ def model_evaluation():
                                    skip_special_tokens=True)
         print(f"input sentence: {sentence}")
         print(f"model response: {res_sen}")
-        if res_sen.split(' ')[-1] == "<br>" or res_sen.spilt(' ')[-1] == "<eos>":
+        if res_sen.split(' ')[-1] == "<br>" or res_sen.split(' ')[-1] == "<eos>":
             break
         input_ids = responses
 
