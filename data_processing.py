@@ -45,8 +45,8 @@ def build_training_input(history, target):
         # print("sen is: ", sen)
         # Add dialog turns into the sequence with the token of the speaker
         pre = customer if count % 2 == 0 else assistant
-        string = pre + ' ' + sen + ' ' + br if sequence \
-            else bos + ' ' + pre + ' ' + sen + ' ' + br
+        string = pre + ' ' + sen if sequence \
+            else bos + ' ' + pre + ' ' + sen
         # print("sentence ", count, ": ", string)
         sequence.append(string)
         count += 1
@@ -68,7 +68,7 @@ def build_training_label(history, target):
     for sen in history:
         # Add dialog turns into the sequence with the token of the speaker
         pre = customer if count % 2 == 0 else assistant
-        string = pre + ' ' + sen + ' ' + br
+        string = pre + ' ' + sen
         sequence.append(string)
         count += 1
     if target:
@@ -95,8 +95,8 @@ def build_input(history, target):
         # Add dialog turns into the sequence with the token of the speaker
         pre = customer if count % 2 == 0 else assistant
         string_no_bos = pre + ' ' + sen + ' ' + br
-        string = pre + ' ' + sen + ' ' + br if sequence \
-            else bos + ' ' + pre + ' ' + sen + ' ' + br
+        string = pre + ' ' + sen if sequence \
+            else bos + ' ' + pre + ' ' + sen
         # print("sentence ", count, ": ", string)
         sequence.append(string)
         sequence_no_eos.append(string_no_bos)
