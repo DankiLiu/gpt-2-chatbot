@@ -123,7 +123,7 @@ def build_input(history, target):
 def get_history_reply_pairs():
     file_id, _ = read_from_json() # how many files are gonna be read
     history, reply = [], []
-    for file_num in range(1, file_id+1)
+    for file_num in range(1, file_id+1):
         file_name = "dialogs/" + "dialogs_" + str(file_num) + ".json"
         with open(file_name) as f:
             data = json.load(f)
