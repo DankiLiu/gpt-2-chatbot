@@ -220,8 +220,10 @@ def model_evaluation():
               f"input_ids is on device {input_ids.get_device()}")
         model.cpu()
         input_ids.cpu()
-        responses = model.generate(input_ids=input_ids)
-        res_sen = tokenizer.decode(responses[0])
+        responses = model.generate(input_ids=input_ids,
+                                   max_length=50)
+        res_sen = tokenizer.decode(responses[0],
+                                   skip_special_tokens=True)
         print(f"input sentence: {sentence}")
         print(f"model response: {res_sen}")
         if res_sen.spilt(' ')[-1] == "<br>" or res_sen.spilt(' ')[-1] == "<eos>":
