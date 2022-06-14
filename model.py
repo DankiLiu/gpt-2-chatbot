@@ -109,6 +109,7 @@ def train(from_checkpoint=False, cuda=True):
                 build_training_data(history[train_index], reply[train_index])
             # Training
             model.train()
+            print("model training mode: ------->")
             if cuda:
                 ids = ids.cuda()
                 token_ids = token_ids.cuda()
@@ -119,9 +120,10 @@ def train(from_checkpoint=False, cuda=True):
             output.loss.backward()
             optimizer.step()
             optimizer.zero_grad()
+            # print(f"loss {output.loss}  gradient {output.loss.backward()}")
             sample_num += 1
-            if sample_num % 1000000:
-                print("---> validate after every 1000000 examples: ")
+            if sample_num % 1000000 == 0:
+                print(f"---> validate after every {sample_num} examples: ")
                 # Validate after every 1000000 examples
                 model.eval()
                 from random import choice
@@ -146,16 +148,7 @@ def train(from_checkpoint=False, cuda=True):
                 print(f"Model evaluation: \ninput: {history[test_index]}")
                 print(f"model decode: {tokenizer.decode(responses[0])}")
                 # print(f"model output: {tokenizer.decode(output)}")
-                from datetime import datetime
-                training_info = {
-                    "time": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
-                    "epoch": epoch,
-                    "sample_size": sample_num,
-                    "loss": str(output.loss)
-                }
-                outfile = open('training_info.json', 'a')
-                json.dump(training_info, outfile, indent=6)
-                outfile.close()
+
                 print("validate epoch     - ", epoch)
                 print("validate loss      - ", output.loss)
                 # print("val_loss  - ", val_loss.loss)
@@ -172,6 +165,18 @@ def train(from_checkpoint=False, cuda=True):
             token_ids = token_ids.cuda()
         val_loss = model(input_ids=ids,
                          token_type_ids=token_ids)
+
+        from datetime import datetime
+        training_info = {
+            "time": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+            "epoch": epoch,
+            "sample_size": sample_num,
+            "loss": str(output.loss)
+        }
+        outfile = open('training_info.json', 'a')
+        json.dump(training_info, outfile, indent=6)
+        outfile.close()
+
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
