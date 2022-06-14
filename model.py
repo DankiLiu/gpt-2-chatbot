@@ -121,6 +121,7 @@ def train(from_checkpoint=False, cuda=True):
             optimizer.zero_grad()
             sample_num += 1
             if sample_num % 1000000:
+                print("---> validate after every 1000000 examples: ")
                 # Validate after every 1000000 examples
                 model.eval()
                 from random import choice
@@ -139,7 +140,7 @@ def train(from_checkpoint=False, cuda=True):
                                  labels=lm_targets)              
                 """
                 responses = model.generate(input_ids=ids,
-                                           max_length=50)
+                                           max_length=500)
                 output = model(input_ids=ids,
                                token_type_ids=token_ids)
                 print(f"Model evaluation: \ninput: {history[test_index]}")
@@ -155,8 +156,8 @@ def train(from_checkpoint=False, cuda=True):
                 outfile = open('training_info.json', 'a')
                 json.dump(training_info, outfile, indent=6)
                 outfile.close()
-                print("epoch     - ", epoch)
-                print("loss      - ", output.loss)
+                print("validate epoch     - ", epoch)
+                print("validate loss      - ", output.loss)
                 # print("val_loss  - ", val_loss.loss)
 
         # Validate after one epoch

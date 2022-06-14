@@ -41,6 +41,9 @@ def build_training_input(history, target):
     bos, eos, customer, assistant, pad, _ = data["special_tokens"]
     count = 0
     sequence = []
+
+    # print("history (input) -> ", history)
+    # print("target (input) -> ", target)
     for sen in history:
         # print("sen is: ", sen)
         # Add dialog turns into the sequence with the token of the speaker
@@ -55,6 +58,8 @@ def build_training_input(history, target):
         target = customer + ' ' + target \
             if count % 2 == 0 else assistant + ' ' + target
         sequence.append(target)
+
+    # print("sequence (input) -> ", sequence)
     return sequence
 
 
@@ -65,6 +70,8 @@ def build_training_label(history, target):
     bos, eos, customer, assistant, pad, _ = data["special_tokens"]
     count = 0
     sequence = []
+    # print("history (label) -> ", history)
+    # print("target (label) -> ", target)
     for sen in history:
         # Add dialog turns into the sequence with the token of the speaker
         pre = customer if count % 2 == 0 else assistant
@@ -75,6 +82,7 @@ def build_training_label(history, target):
         target = customer + ' ' + target + ' ' + eos \
             if count % 2 == 0 else assistant + ' ' + target + ' ' + eos
         sequence.append(target)
+    # print("sequence (label) -> ", sequence)
     return sequence
 
 
