@@ -182,7 +182,7 @@ def train(from_checkpoint=False, cuda=True):
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             'val_loss': val_loss.loss
-        }, "saved_models/model" + str(sample_num % 1000))
+        }, "saved_models/model_gpt" + str(sample_num % 1000))
         print("epoch     - ", epoch)
         print("val_loss  - ", val_loss.loss)
         logging.info("Saving model ...")
@@ -230,7 +230,7 @@ def model_evaluation():
         model.cpu()
         input_ids.cpu()
         responses = model.generate(input_ids=input_ids,
-                                   max_length=50)
+                                   max_length=500)
         res_sen = tokenizer.decode(responses[0],
                                    skip_special_tokens=True)
         print(f"input sentence: {sentence}")
