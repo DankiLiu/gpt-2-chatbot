@@ -1,8 +1,10 @@
 import os
 import torch
 from torch import nn
+import torch.nn.functional as F
+from torchvision import transforms
 from torchvision.datasets import MNIST
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 from pytorch_lightning.loggers import TensorBoardLogger
 import pytorch_lightning as pl
 
@@ -29,7 +31,7 @@ class LitAutoEncoder(pl.LightningModule):
 
 
 if __name__ == '__main__':
-    dataset = MNIST(os.getcwd(), download=True)
+    dataset = MNIST(os.getcwd(), download=True, transform=transforms.ToTensor())
     train_loader = DataLoader(dataset)
 
     # init model
@@ -37,6 +39,6 @@ if __name__ == '__main__':
 
     # most basic trainer, uses good defaults (auto-tensorboard, checkpoints, logs, and more)
     # trainer = pl.Trainer(accelerator="gpu", devices=8) (if you have GPUs)
-    logger = TensorBoardLogger("tb_logs", name="demo_model_logs")
+    logger = TensorBoardLogger("tb_logs", name="demo_model")
     trainer = pl.Trainer()
     trainer.fit(model=autoencoder, train_dataloaders=train_loader)
