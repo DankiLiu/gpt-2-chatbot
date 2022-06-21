@@ -25,6 +25,7 @@ class LitAutoEncoder(pl.LightningModule):
         self.log("train_loss", loss)
         return loss
 
+    # def validation_step(self, batch, batch_idx):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
@@ -40,5 +41,6 @@ if __name__ == '__main__':
     # most basic trainer, uses good defaults (auto-tensorboard, checkpoints, logs, and more)
     # trainer = pl.Trainer(accelerator="gpu", devices=8) (if you have GPUs)
     logger = TensorBoardLogger("tb_logs", name="demo_model")
-    trainer = pl.Trainer()
-    trainer.fit(model=autoencoder, train_dataloaders=train_loader)
+    trainer = pl.Trainer(max_epochs=3)
+    trainer.fit(model=autoencoder,
+                train_dataloaders=train_loader)
