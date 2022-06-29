@@ -36,7 +36,7 @@ def generate_dialogs4all():
 
 def build_training_input(history, target):
     """Build input for training, input begins with <bos>"""
-    with open("config.json") as config:
+    with open("../config.json") as config:
         data = json.load(config)
     bos, eos, customer, assistant, pad, _ = data["special_tokens"]
     count = 0
@@ -65,7 +65,7 @@ def build_training_input(history, target):
 
 def build_training_label(history, target):
     """Build label for training, output ends with <eos>"""
-    with open("config.json") as config:
+    with open("../config.json") as config:
         data = json.load(config)
     bos, eos, customer, assistant, pad, _ = data["special_tokens"]
     count = 0
@@ -92,7 +92,7 @@ def build_input(history, target):
     history: a list of strings
     reply: a string
     """
-    with open("config.json") as config:
+    with open("../config.json") as config:
         data = json.load(config)
     bos, eos, customer, assistant, pad, _ = data["special_tokens"]
     count = 0
@@ -129,10 +129,10 @@ def build_input(history, target):
 
 
 def get_history_reply_pairs():
-    file_id, _ = read_from_json() # how many files are gonna be read
+    file_id, _ = read_from_json()
     history, reply = [], []
     for file_num in range(1, file_id+1):
-        file_name = "dialogs/" + "dialogs_" + str(file_num) + ".json"
+        file_name = "../dialogs/" + "dialogs_" + str(file_num) + ".json"
         with open(file_name) as f:
             data = json.load(f)
         dialog_num = len(data)
@@ -148,7 +148,7 @@ def get_history_reply_pairs():
 
 
 def read_from_json():
-    with open("config.json", 'r') as f:
+    with open("../config.json", 'r') as f:
         data = json.load(f)
     file_id = data["file_id"]
     dialog_id = data["dialog_id"]
@@ -171,17 +171,3 @@ def choose_distractor(file="dialogs/distractor.json"):
     from random import randint
     num = randint(0, len(data)-1)
     return data[str(num)]
-
-
-def print_input(words, segments, position, sequence):
-    print("-------------input---------------")
-    print(words)
-    print(segments)
-    print(position)
-    print(sequence)
-    print("----------------------------------")
-
-
-# distractor = choose_distractor()
-# history, reply = get_history_reply_pairs()
-
