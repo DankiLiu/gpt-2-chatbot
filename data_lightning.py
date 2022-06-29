@@ -57,8 +57,3 @@ class DialogDataModule(pl.LightningDataModule):
 
     def test_dataloader(self):
         return DataLoader(self.test_dataset, batch_size=self.batch_size)
-
-
-if __name__ == '__main__':
-    dialogs = DialogDataModule()
-    dialogs.setup()
