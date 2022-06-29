@@ -29,7 +29,7 @@ class DialogDataModule(pl.LightningDataModule):
                 data = json.load(f)
             for example in data:
                 examples.append((tokenizer.encode(example["model_input"]),
-                                 tokenizer(example["model_label"])))
+                                 tokenizer.encode(example["model_label"])))
             return examples
 
         # Load train and validation data from examples.json
