@@ -40,8 +40,8 @@ def build_training_data(history, reply):
     """
     input_seq = build_training_input(history, reply)
     label_seq = build_training_label(history, reply)
-    print(f"input sequence {input_seq}")
-    print(f"label sequence {label_seq}")
+    # print(f"input sequence {input_seq}")
+    # print(f"label sequence {label_seq}")
     assert len(input_seq) == len(label_seq)
     # print(f"input sequence: {input_seq}\nlabel sequence: {label_seq}")
     # sequence, target, sequence_no_nos, target_no_eos = build_input(history, reply)
