@@ -1,14 +1,14 @@
 from pytorch_lightning import Trainer
-from transformers import AdamW, GPT2LMHeadModel
+from transformers import AdamW, GPT2LMHeadModel, GPT2Tokenizer
 from data_lightning import DialogDataModule
 import pytorch_lightning as pl
 
 
 class LitGpt2Chatbot(pl.LightningModule):
-    def __init__(self):
+    def __init__(self, tokenizer):
         super().__init__()
         self.model = GPT2LMHeadModel.from_pretrained('gpt2')
-        # print(f"original max length is {model.config.max_length}")
+        self.model.resize_token_embeddings(len(tokenizer))
         self.model.config.max_length = 1020
 
     def forward(self,
@@ -19,7 +19,7 @@ class LitGpt2Chatbot(pl.LightningModule):
         return response
 
     def training_step(self, batch, batch_idx):
-        input_ids, labels = batch
+        input_ids, labels = batch["input_ids"], batch["labels"]
         output = self.model(input_ids=input_ids,
                             labels=labels)
         loss = output.loss
@@ -28,19 +28,30 @@ class LitGpt2Chatbot(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        input_ids, labels = batch
+        input_ids, labels = batch["input_ids"], batch["labels"]
         output = self.model(input_ids=input_ids,
                             labels=labels)
-        val_loss = output.loss[:2]
-        return {"loss": val_loss, "label": labels}
+        val_loss = output.loss
+        val_logits = output.logits
+        return {"loss": val_loss, "logits": val_logits, "label": labels}
 
     def configure_optimizers(self):
         optimizer = AdamW(self.model.parameters(), lr=0.01, correct_bias=True)
         return optimizer
 
 
+def define_tokenizer():
+    tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+    # Setup tokenizer
+    special_tokens_dict = {'additional_special_tokens':
+                               ['<bos>', '<eos>', '<customer>', '<assistant>', '<pad>', '<br>']}
+    tokenizer.add_special_tokens(special_tokens_dict)
+    return tokenizer
+
+
 if __name__ == '__main__':
-    model = LitGpt2Chatbot()
-    dialog_data = DialogDataModule()
+    tokenizer = define_tokenizer()
+    model = LitGpt2Chatbot(tokenizer)
+    dialog_data = DialogDataModule(tokenizer)
     trainer = Trainer(max_epochs=3)
     trainer.fit(model, datamodule=dialog_data)
