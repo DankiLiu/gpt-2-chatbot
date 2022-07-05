@@ -44,20 +44,21 @@ class DialogDataSet(Dataset):
         model_input = self.annotations[index]['model_input']
         model_label = self.annotations[index]['model_label']
 
-        input_id = self.tokenizer.encode(model_input)
-        label = self.tokenizer.encode(model_label)
         sample: DiaSample = {
-            'input_id': input_id,
-            'label': label
+            'input_id': model_input,
+            'label': model_label
         }
         return sample
 
     def collate_dia_samples(self, batch: List[DiaSample]) -> DiaBatch:
         input_ids = [b['input_id'] for b in batch]
         labels = [b['label'] for b in batch]
+        tok_args = dict(padding=True, return_tensors='pt', add_special_tokens=False)
+        input_ids_tok = self.tokenizer(input_ids, **tok_args),
+        labels_tok = self.tokenizer(labels, **tok_args)
         result: DiaBatch = {
-            'input_ids': torch.as_tensor(input_ids),
-            'labels': torch.as_tensor(labels)
+            'input_ids': input_ids_tok,
+            'labels': labels_tok
         }
         return result
 
