@@ -44,8 +44,11 @@ def define_tokenizer():
     tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
     # Setup tokenizer
     special_tokens_dict = {'additional_special_tokens':
-                               ['<bos>', '<eos>', '<customer>', '<assistant>', '<pad>', '<br>']}
+                               ['<customer>', '<assistant>']}
     tokenizer.add_special_tokens(special_tokens_dict)
+    tokenizer.add_special_tokens({'bos_token': '<bos>',
+                                  'eos_token': '<eos>',
+                                  'pad_token': '<pad>'})
     return tokenizer
 
 
