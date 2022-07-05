@@ -43,11 +43,8 @@ class LitGpt2Chatbot(pl.LightningModule):
 def define_tokenizer():
     tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
     # Setup tokenizer
-    special_tokens_dict = {'bos_token': '<bos>',
-                           'eos_token': '<eos>',
-                           'customer_token': '<customer>',
-                           'assistant_token': '<assistant>',
-                           'pad_token': '<pad>'}
+    special_tokens_dict = {'additional_special_tokens':
+                               ['<bos>', '<eos>', '<customer>', '<assistant>', '<pad>', '<br>']}
     tokenizer.add_special_tokens(special_tokens_dict)
     return tokenizer
 
