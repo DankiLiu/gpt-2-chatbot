@@ -57,8 +57,8 @@ class DialogDataSet(Dataset):
         input_ids_tok = self.tokenizer(input_ids, **tok_args),
         labels_tok = self.tokenizer(labels, **tok_args)
         result: DiaBatch = {
-            'input_ids': input_ids_tok,
-            'labels': labels_tok
+            'input_ids': input_ids_tok[0]['input_ids'],
+            'labels': labels_tok['input_ids']
         }
         return result
 
