@@ -11,19 +11,22 @@ from torch.utils.data import Dataset
 DiaAnnotationFileDictKey = Literal[
     'id',
     'model_input',
-    'model_label'
+    'model_label',
+    'token_ids'
 ]
 
 DiaSampleDictKey = Literal[
     'input_id',
-    'label'
+    'label',
+    'token_ids'
 ]
 
 DiaBatchDictKey = Literal[
     'batch_input_ids',  # b * L
-    'batch_labels'  # B * L
+    'batch_labels',  # B * L
+    'batch_token_ids'   # B * L
 ]
-DatasetSplitName = Literal["train", "test"]
+DatasetSplitName = Literal["train", "val", "test"]
 DiaSample = Dict[str, Union[torch.Tensor, str, int]]
 DiaBatch = Dict[str, Union[List, Tensor]]
 
@@ -43,22 +46,27 @@ class DialogDataSet(Dataset):
     def __getitem__(self, index) -> DiaSample:
         model_input = self.annotations[index]['model_input']
         model_label = self.annotations[index]['model_label']
+        token_ids = self.annotations[index]['token_ids']
 
         sample: DiaSample = {
             'input_id': model_input,
-            'label': model_label
+            'label': model_label,
+            'token_ids': token_ids
         }
         return sample
 
     def collate_dia_samples(self, batch: List[DiaSample]) -> DiaBatch:
         input_ids = [b['input_id'] for b in batch]
         labels = [b['label'] for b in batch]
+        token_ids = [b['token_ids'] for b in batch]
         tok_args = dict(padding=True, return_tensors='pt', add_special_tokens=False)
-        input_ids_tok = self.tokenizer(input_ids, **tok_args),
+        input_ids_tok = self.tokenizer(input_ids, **tok_args)
         labels_tok = self.tokenizer(labels, **tok_args)
+        token_type_ids = torch.tensor([token_ids], dtype=torch.long)
         result: DiaBatch = {
-            'input_ids': input_ids_tok[0]['input_ids'],
-            'labels': labels_tok['input_ids']
+            'input_ids': input_ids_tok['input_ids'],
+            'labels': labels_tok['input_ids'],
+            'token_ids': token_type_ids
         }
         return result
 
