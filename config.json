@@ -6,6 +6,7 @@
   "<pad>",
   "<br>"
   ],
-  "file_id": 10,
-  "dialog_id": 0
+  "train_file_id": [1, 9],
+  "val_file_id": [10, 10],
+  "test_file_id": [11, 13]
 }

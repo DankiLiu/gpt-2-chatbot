@@ -1,48 +1,13 @@
 import json
+from data_processing import build_training_input, build_training_label, get_history_reply_pairs
 
-from data_processing import get_history_reply_pairs
-from data_processing import build_training_input, build_training_label
+from model_lightning import define_tokenizer
 
-"""Store the data in json file"""
-# history is a list of strings
-# reply is a string
-histories, replies = get_history_reply_pairs()
-# print three examples of history, reply pairs
-for i in range(3):
-    print("history: ", histories[i])
-    print("reply: ", replies[i])
 
-# add special tokens
-count = 0
-assert len(histories) == len(replies)
-examples = []
-
-for i in range(len(histories)):
-    model_input = build_training_input(histories[i], replies[i])
-    model_label = build_training_label(histories[i], replies[i])
-    """model_input and model_label are a list of strings with special token.
-    concatenate the strings into one string."""
-    model_input = ' '.join([model_input[i] for i in range(len(model_input))])
-    model_label = ' '.join([model_label[i] for i in range(len(model_label))])
-    example = {
-        "id": count,
-        "model_input": model_input,
-        "model_label": model_label
-    }
-    examples.append(example)
-    count += 1
-
-with open("examples_test.json", 'a') as f:
-    json.dump(examples, f, indent=4)
-
-"""
-def token_ids(sequence):
-    sentences = []
+def get_token_ids(sequence, tokenizer):
     token_ids = []
-    ids = []
     for sentence in sequence:
         words = tokenizer.tokenize(sentence)
-        sentences.append(words)
         # build token_ids
         if '<customer>' in words:
             segments = '<customer> ' * len(words)
@@ -52,7 +17,47 @@ def token_ids(sequence):
             segments = '<assistant> ' * len(words)
             # token_ids = [*token_ids, *tokenizer.convert_tokens_to_ids(tokenizer.tokenize(segments))]
             token_ids = [*token_ids, *len(tokenizer.tokenize(segments)) * [1]]
-        ids = [*ids, *tokenizer.convert_tokens_to_ids(words)]
-        assert len(token_ids) == len(ids)
-    return ids, token_ids, sentences
-"""
+    return token_ids
+
+
+def store_data_in_file(tokenizer, usage):
+    """Store the data in json file"""
+    # history is a list of strings
+    # reply is a string
+    histories, replies = get_history_reply_pairs(data_usage=usage)
+    count = 0
+    assert len(histories) == len(replies)
+    examples = []
+    for i in range(len(histories)):
+        print(f"adding {count}th example")
+        model_input = build_training_input(histories[i], replies[i])
+        model_label = build_training_label(histories[i], replies[i])
+
+        token_ids = get_token_ids(model_label, tokenizer)
+        model_input = ' '.join([model_input[i] for i in range(len(model_input))])
+        model_label = ' '.join([model_label[i] for i in range(len(model_label))])
+        example = {
+            "id": count,
+            "model_input": model_input,
+            "model_label": model_label,
+            'token_ids': token_ids
+        }
+        examples.append(example)
+        count += 1
+
+    examples = {"example" : 1}
+
+    name = '../data_preparation/examples_' + usage + '.json'
+    print("storing")
+    with open(name, 'a') as f:
+        json.dump(examples, f, indent=4)
+
+
+if __name__ == '__main__':
+    tokenizer = define_tokenizer()
+    # store_data_in_file(tokenizer, "train")
+    # print("train data stored")
+    store_data_in_file(tokenizer, "val")
+    print("val data stored")
+    store_data_in_file(tokenizer, "test")
+    print("test data stored")

@@ -128,10 +128,16 @@ def build_input(history, target):
     return sequence, target, sequence_no_eos
 
 
-def get_history_reply_pairs():
-    file_id, _ = read_from_json()
+def get_history_reply_pairs(data_usage: str):
+    start, end = 0, 0
+    if data_usage == 'train':
+        start, end = get_train_files()
+    elif data_usage == 'val':
+        start, end = get_val_files()
+    elif data_usage == 'test':
+        start, end = get_test_files()
     history, reply = [], []
-    for file_num in range(1, file_id+1):
+    for file_num in range(start, end + 1):
         file_name = "../dialogs/" + "dialogs_" + str(file_num) + ".json"
         with open(file_name) as f:
             data = json.load(f)
@@ -147,22 +153,25 @@ def get_history_reply_pairs():
     return history, reply
 
 
-def read_from_json():
+def get_train_files():
     with open("../config.json", 'r') as f:
         data = json.load(f)
-    file_id = data["file_id"]
-    dialog_id = data["dialog_id"]
-    return file_id, dialog_id
+    start, end = data["train_file_id"]
+    return start, end
 
 
-def write_to_json(file_id, dialog_id):
-    with open("config.json", 'r') as f:
+def get_val_files():
+    with open("../config.json", 'r') as f:
         data = json.load(f)
-    data["file_id"] = file_id
-    data["dialog_id"] = dialog_id
-    with open("config.json", 'w') as f:
-        json.dump(data, "config.json")
+    start, end = data["val_file_id"]
+    return start, end
 
+
+def get_test_files():
+    with open("../config.json", 'r') as f:
+        data = json.load(f)
+    start, end = data["test_file_id"]
+    return start, end
 
 def choose_distractor(file="dialogs/distractor.json"):
     """Choose a random distracotr sentence from the file."""
