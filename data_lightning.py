@@ -4,10 +4,10 @@ from DialogData import DialogDataSet
 
 
 class DialogDataModule(pl.LightningDataModule):
-    def __init__(self, tokenizer):
+    def __init__(self, tokenizer, train_bsz=1, test_bsz=1):
         super().__init__()
-        self.train_bsz = 1
-        self.test_bsz = 1
+        self.train_bsz = train_bsz
+        self.test_bsz = test_bsz
         self.train_dataset, self.val_dataset, self.test_dataset = None, None, None
         self.tokenizer = tokenizer
 

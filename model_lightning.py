@@ -5,8 +5,10 @@ import pytorch_lightning as pl
 
 
 class LitGpt2Chatbot(pl.LightningModule):
-    def __init__(self, tokenizer):
+    def __init__(self, tokenizer, learning_rate=0.00001, batch_size=1):
         super().__init__()
+        self.learning_rate = learning_rate
+        self.batch_size = batch_size
         self.model = GPT2LMHeadModel.from_pretrained('gpt2')
         self.model.resize_token_embeddings(len(tokenizer))
         self.model.config.max_length = 1020
@@ -36,25 +38,10 @@ class LitGpt2Chatbot(pl.LightningModule):
         return {"loss": val_loss, "logits": val_logits, "label": labels}
 
     def configure_optimizers(self):
-        optimizer = AdamW(self.model.parameters(), lr=0.01, correct_bias=True)
+        optimizer = AdamW(self.model.parameters(), lr=self.learning_rate, correct_bias=True)
         return optimizer
 
 
-def define_tokenizer():
-    tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-    # Setup tokenizer
-    special_tokens_dict = {'additional_special_tokens':
-                               ['<customer>', '<assistant>']}
-    tokenizer.add_special_tokens(special_tokens_dict)
-    tokenizer.add_special_tokens({'bos_token': '<bos>',
-                                  'eos_token': '<eos>',
-                                  'pad_token': '<pad>'})
-    return tokenizer
 
 
-if __name__ == '__main__':
-    tokenizer = define_tokenizer()
-    model = LitGpt2Chatbot(tokenizer)
-    dialog_data = DialogDataModule(tokenizer)
-    trainer = Trainer(max_epochs=3)
-    trainer.fit(model, datamodule=dialog_data)
+
