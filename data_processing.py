@@ -1,7 +1,5 @@
 import json
 import os
-import logging
-from itertools import chain
 
 
 def generate_dialogs(file, count):
