@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 
 
 class LitGpt2Chatbot(pl.LightningModule):
-    def __init__(self, tokenizer, learning_rate=0.00001, batch_size=1):
+    def __init__(self, tokenizer, learning_rate=2.2908676527677725e-05, batch_size=1):
         super().__init__()
         self.learning_rate = learning_rate
         self.batch_size = batch_size
