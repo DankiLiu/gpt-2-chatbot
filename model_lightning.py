@@ -5,13 +5,14 @@ import pytorch_lightning as pl
 
 
 class LitGpt2Chatbot(pl.LightningModule):
-    def __init__(self, tokenizer, learning_rate=0.00001, batch_size=1):
+    def __init__(self, tokenizer, data_loader, learning_rate=0.00001, batch_size=1):
         super().__init__()
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.model = GPT2LMHeadModel.from_pretrained('gpt2')
         self.model.resize_token_embeddings(len(tokenizer))
         self.model.config.max_length = 1020
+        self.data_loader = data_loader
 
     def forward(self,
                 input_ids,
@@ -41,7 +42,9 @@ class LitGpt2Chatbot(pl.LightningModule):
         optimizer = AdamW(self.model.parameters(), lr=self.learning_rate, correct_bias=True)
         return optimizer
 
-
+    def train_dataloader(self):
+        self.data_loader.setup()
+        return self.data_loader.train_dataloader()
 
 
 

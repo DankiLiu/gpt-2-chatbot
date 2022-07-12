@@ -39,9 +39,19 @@ def save_bsz(bsz):
         json.dump(data, "hyperparameters.json")
 
 
+def find_learning_rate(model):
+    trainer = Trainer(auto_lr_find=True)
+    lr_finder = trainer.tuner.lr_find(model)
+    fig = lr_finder.plot(suggest=True)
+    fig.show()
+    print(lr_finder.suggestion())
+    model.learning_rate = lr_finder.suggestion()
+
+
 if __name__ == '__main__':
+    import os
+    os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
     tokenizer = define_tokenizer()
-    model = LitGpt2Chatbot(tokenizer)
-    dialog_data = DialogDataModule(tokenizer)
-    trainer = Trainer(max_epochs=3)
-    trainer.fit(model, datamodule=dialog_data)
+    dataModule = DialogDataModule(tokenizer)
+    model = LitGpt2Chatbot(tokenizer, data_loader=dataModule)
+    lr = find_learning_rate(model)

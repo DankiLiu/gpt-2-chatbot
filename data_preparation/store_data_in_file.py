@@ -1,7 +1,7 @@
 import json
 from data_processing import build_training_input, build_training_label, get_history_reply_pairs
 
-from model_lightning import define_tokenizer
+from train_lightning import define_tokenizer
 
 
 def get_token_ids(sequence, tokenizer):
@@ -45,8 +45,6 @@ def store_data_in_file(tokenizer, usage):
         examples.append(example)
         count += 1
 
-    examples = {"example" : 1}
-
     name = '../data_preparation/examples_' + usage + '.json'
     print("storing")
     with open(name, 'a') as f:
@@ -55,8 +53,8 @@ def store_data_in_file(tokenizer, usage):
 
 if __name__ == '__main__':
     tokenizer = define_tokenizer()
-    # store_data_in_file(tokenizer, "train")
-    # print("train data stored")
+    store_data_in_file(tokenizer, "train")
+    print("train data stored")
     store_data_in_file(tokenizer, "val")
     print("val data stored")
     store_data_in_file(tokenizer, "test")
