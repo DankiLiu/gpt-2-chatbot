@@ -45,7 +45,14 @@ def find_learning_rate(model):
     fig = lr_finder.plot(suggest=True)
     fig.show()
     print(lr_finder.suggestion())
-    model.learning_rate = lr_finder.suggestion()
+    return lr_finder.suggestion()
+
+
+def find_batch_size(model):
+    trainer = Trainer(auto_scale_batch_size=True)
+    bsz = trainer.tuner.scale_batch_size(model)
+    print(f"found batch size {bsz}")
+    return bsz
 
 
 if __name__ == '__main__':
@@ -54,4 +61,4 @@ if __name__ == '__main__':
     tokenizer = define_tokenizer()
     dataModule = DialogDataModule(tokenizer)
     model = LitGpt2Chatbot(tokenizer, data_loader=dataModule)
-    lr = find_learning_rate(model)
+    find_batch_size(model)
