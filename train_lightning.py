@@ -41,7 +41,7 @@ def save_bsz(bsz):
 
 if __name__ == '__main__':
     tokenizer = define_tokenizer()
-    model = LitGpt2Chatbot(tokenizer)
+    model = LitGpt2Chatbot(tokenizer, batch_size=52744)
     dialog_data = DialogDataModule(tokenizer)
     trainer = Trainer(max_epochs=3)
     trainer.fit(model, datamodule=dialog_data)
