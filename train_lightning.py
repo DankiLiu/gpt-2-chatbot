@@ -1,6 +1,7 @@
 import json
 
 from pytorch_lightning import Trainer
+from pytorch_lightning.loggers import TensorBoardLogger
 from transformers import GPT2Tokenizer
 
 from data_lightning import DialogDataModule
@@ -43,5 +44,6 @@ if __name__ == '__main__':
     tokenizer = define_tokenizer()
     model = LitGpt2Chatbot(tokenizer, batch_size=52744)
     dialog_data = DialogDataModule(tokenizer)
-    trainer = Trainer(max_epochs=3)
+    logger = TensorBoardLogger("tb_logs", name="my_model")
+    trainer = Trainer(max_epochs=3, logger=logger)
     trainer.fit(model, datamodule=dialog_data)
