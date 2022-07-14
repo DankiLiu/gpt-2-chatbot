@@ -56,7 +56,8 @@ if __name__ == '__main__':
     path = "tb_logs/my_model/version_0/"
     trained_model = model.load_from_checkpoint(
         checkpoint_path=path + "checkpoints/epoch=2-step=158232.ckpt",
-        hparams_file=path + "hparams.yaml"
+        hparams_file=path + "hparams.yaml",
+        map_location=None
     )
     print("loaded model from checkpoint")
     trainer = Trainer(max_epochs=3, logger=logger)
