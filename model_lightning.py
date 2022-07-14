@@ -1,15 +1,16 @@
 from pytorch_lightning import Trainer
 from transformers import AdamW, GPT2LMHeadModel, GPT2Tokenizer
-from data_lightning import DialogDataModule
+from train_lightning import define_tokenizer
 import pytorch_lightning as pl
 
 
 class LitGpt2Chatbot(pl.LightningModule):
-    def __init__(self, tokenizer, learning_rate=2.2908676527677725e-05, batch_size=1):
+    def __init__(self, learning_rate=2.2908676527677725e-05, batch_size=1):
         super().__init__()
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.model = GPT2LMHeadModel.from_pretrained('gpt2')
+        tokenizer = define_tokenizer()
         self.model.resize_token_embeddings(len(tokenizer))
         self.model.config.max_length = 1020
 
