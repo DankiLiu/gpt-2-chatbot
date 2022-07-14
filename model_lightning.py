@@ -50,8 +50,8 @@ class LitGpt2Chatbot(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         input_ids, labels = batch["input_ids"], batch["labels"]
-        response = self.generate(input_ids=input_ids,
-                                 max_length=500)
+        response = self.model(input_ids=input_ids,
+                              max_length=500)
         res_sen = self.tokenizer.decode(response[0],
                                         skip_special_tokens=True)
         self.log("output", res_sen)
