@@ -44,6 +44,6 @@ if __name__ == '__main__':
     tokenizer = define_tokenizer()
     model = LitGpt2Chatbot(tokenizer, batch_size=52744)
     dialog_data = DialogDataModule(tokenizer)
-    logger = TensorBoardLogger("tb_logs", name="my_model")
+    logger = TensorBoardLogger("tb_train_val_logs", name="my_model")
     trainer = Trainer(max_epochs=3, logger=logger)
     trainer.fit(model, datamodule=dialog_data)
