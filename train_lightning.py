@@ -39,20 +39,15 @@ def save_bsz(bsz):
         data["batch_size"] = bsz
         json.dump(data, "hyperparameters.json")
 
-def load_model(model, path):
-    # Load model from checkpoint
-    model = model.load_from_checkpoint(
+
+def test_model(model, data_module, logger, path="tb_logs/my_model/version_0/"):
+    trained_model = model.load_from_checkpoint(
         checkpoint_path=path+"checkpoints/epoch=2-step=158232.ckpt",
         hparams_file=path+"hparams.yaml"
     )
     print("loaded model from checkpoint")
-    return model
-
-
-def test_model(model, data_module, logger, path="tb_logs/my_model/version_0/"):
-    model = load_model(model, path)
     trainer = Trainer(max_epochs=3, logger=logger)
-    trainer.test(model, datamodule=data_module)
+    trainer.test(trained_model, datamodule=data_module)
 
 
 def train_new_model(model, data_module, logger):
