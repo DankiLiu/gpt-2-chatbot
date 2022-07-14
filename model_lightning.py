@@ -35,6 +35,7 @@ class LitGpt2Chatbot(pl.LightningModule):
                             labels=labels)
         val_loss = output.loss
         val_logits = output.logits
+        self.log("val_loss", val_loss)
         return {"loss": val_loss, "logits": val_logits, "label": labels}
 
     def configure_optimizers(self):
