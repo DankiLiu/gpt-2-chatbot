@@ -40,16 +40,6 @@ def save_bsz(bsz):
         json.dump(data, "hyperparameters.json")
 
 
-def test_model(model, data_module, logger, path="tb_logs/my_model/version_0/"):
-    trained_model = model.load_from_checkpoint(
-        checkpoint_path=path+"checkpoints/epoch=2-step=158232.ckpt",
-        hparams_file=path+"hparams.yaml"
-    )
-    print("loaded model from checkpoint")
-    trainer = Trainer(max_epochs=3, logger=logger)
-    trainer.test(trained_model, datamodule=data_module)
-
-
 def train_new_model(model, data_module, logger):
     trainer = Trainer(max_epochs=3, logger=logger)
     trainer.fit(model, datamodule=data_module)
@@ -57,10 +47,17 @@ def train_new_model(model, data_module, logger):
 
 if __name__ == '__main__':
     tokenizer = define_tokenizer()
-    model = LitGpt2Chatbot(tokenizer, batch_size=52744)
+    # model = LitGpt2Chatbot(tokenizer=tokenizer, batch_size=52744)
+    model = LitGpt2Chatbot(tokenizer=tokenizer)
     dialog_data = DialogDataModule(tokenizer)
     logger = TensorBoardLogger("tb_train_val_logs", name="my_model_test")
-    test_model(model=model,
-               data_module=dialog_data,
-               logger=logger)
 
+    # Test model
+    path = "tb_logs/my_model/version_0/"
+    trained_model = model.load_from_checkpoint(
+        checkpoint_path=path + "checkpoints/epoch=2-step=158232.ckpt",
+        hparams_file=path + "hparams.yaml"
+    )
+    print("loaded model from checkpoint")
+    trainer = Trainer(max_epochs=3, logger=logger)
+    trainer.test(trained_model, datamodule=dialog_data)
