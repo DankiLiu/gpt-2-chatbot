@@ -48,12 +48,13 @@ def train_new_model(model, data_module, logger):
 if __name__ == '__main__':
     tokenizer = define_tokenizer()
     # model = LitGpt2Chatbot(tokenizer=tokenizer, batch_size=52744)
+    # model = LitGpt2Chatbot(tokenizer=tokenizer)
     dialog_data = DialogDataModule(tokenizer)
     logger = TensorBoardLogger("tb_train_val_logs", name="my_model_test")
 
     # Test model
     path = "tb_logs/my_model/version_0/"
-    trained_model = LitGpt2Chatbot(tokenizer=tokenizer).load_from_checkpoint(
+    trained_model = LitGpt2Chatbot.load_from_checkpoint(
         checkpoint_path=path + "checkpoints/epoch=2-step=158232.ckpt",
         hparams_file=path + "hparams.yaml",
         map_location=None
