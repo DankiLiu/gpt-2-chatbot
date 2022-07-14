@@ -38,11 +38,19 @@ class LitGpt2Chatbot(pl.LightningModule):
         self.log("val_loss", val_loss)
         return {"loss": val_loss, "logits": val_logits, "label": labels}
 
+    def test_step(self, batch):
+        input_ids, label = batch
+        response = self.generate(input_ids=input_ids,
+                               max_length=500)
+        res_sen = self.tokenizer.decode(response[0],
+                                        skip_special_tokens=True)
+        self.log("output", res_sen)
+        output = {"input_ids": input_ids,
+                "reponse": res_sen,
+                "label_gt": label}
+        print(output)
+        return output
+
     def configure_optimizers(self):
         optimizer = AdamW(self.model.parameters(), lr=self.learning_rate, correct_bias=True)
         return optimizer
-
-
-
-
-
