@@ -50,14 +50,18 @@ class LitGpt2Chatbot(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         input_ids, labels = batch["input_ids"], batch["labels"]
-        response = self.model(input_ids=input_ids)
-        res_sen = self.tokenizer.decode(response[0],
-                                        skip_special_tokens=True)
-        self.log("output", res_sen)
-        output = {"input_ids": input_ids,
+        response = self.model.generate(input_ids=input_ids)
+
+        res_sen = self.tokenizer.convert_ids_to_tokens(response[0])
+        # self.log("output", res_sen)
+        input_sen = self.tokenizer.convert_ids_to_tokens(input_ids[0])
+        label_sen = self.tokenizer.convert_ids_to_tokens(labels[0])
+        output = {"input_ids": input_sen,
                   "response": res_sen,
-                  "label_gt": labels}
-        print(output)
+                  "label_gt": label_sen}
+        print(output["input_ids"])
+        print(output["response"])
+        print(output["label_gt"])
         return output
 
     def configure_optimizers(self):

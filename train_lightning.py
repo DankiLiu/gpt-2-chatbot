@@ -41,19 +41,13 @@ def save_bsz(bsz):
 
 
 def train_new_model(model, data_module, logger):
-    trainer = Trainer(max_epochs=3, logger=logger)
+    trainer = Trainer(max_epochs=3, logger=logger, val_check_interval=10000)
     trainer.fit(model, datamodule=data_module)
 
 
-if __name__ == '__main__':
-    tokenizer = define_tokenizer()
-    # model = LitGpt2Chatbot(tokenizer=tokenizer, batch_size=52744)
-    # model = LitGpt2Chatbot(tokenizer=tokenizer)
-    dialog_data = DialogDataModule(tokenizer)
-    logger = TensorBoardLogger("tb_train_val_logs", name="my_model_test")
-
+def test_model(dialog_data, logger):
     # Test model
-    path = "tb_logs/my_model/version_0/"
+    path = "lightning_logs/version_0/"
     trained_model = LitGpt2Chatbot.load_from_checkpoint(
         checkpoint_path=path + "checkpoints/epoch=2-step=158232.ckpt",
         hparams_file=path + "hparams.yaml",
@@ -62,3 +56,13 @@ if __name__ == '__main__':
     print("loaded model from checkpoint")
     trainer = Trainer(max_epochs=3, logger=logger)
     trainer.test(trained_model, datamodule=dialog_data)
+
+
+if __name__ == '__main__':
+    tokenizer = define_tokenizer()
+    model = LitGpt2Chatbot(batch_size=52744)
+    # model = LitGpt2Chatbot(tokenizer=tokenizer)
+    dialog_data = DialogDataModule(tokenizer)
+    logger = TensorBoardLogger("tb_train_val_logs", name="model_0718")
+    train_new_model(model, dialog_data, logger)
+
